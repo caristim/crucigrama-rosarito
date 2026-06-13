@@ -27,15 +27,15 @@ const els = {
   clearBtn: document.getElementById('clearBtn')
 };
 
-/* ========= Loader ========= */
+/* ========= Loader (Corregido con rutas explícitas para GitHub Pages) ========= */
 async function loadIndex() {
-  const res = await fetch('data/index.json');
-  if (!res.ok) throw new Error('No se pudo cargar data/index.json');
+  const res = await fetch('./data/index.json');
+  if (!res.ok) throw new Error('No se pudo cargar ./data/index.json');
   return res.json();
 }
 
 async function loadCrossword(file) {
-  const res = await fetch(`data/crosswords/${file}`);
+  const res = await fetch(`./data/crosswords/${file}`);
   if (!res.ok) throw new Error(`No se pudo cargar ${file}`);
   return res.json();
 }
@@ -244,7 +244,7 @@ function setCharAtActive(ch) {
 
   cell.user = ch;
   updateCellDom(r, c);
-  if (state.checkMode) applyCheckVisuals(); // Re-comprobar dinámicamente si está activo
+  if (state.checkMode) applyCheckVisuals();
 
   moveWithinActive(+1);
 }
@@ -335,7 +335,7 @@ function onKeyDown(ev) {
   if (key === 'Backspace') {
     ev.preventDefault();
     clearAtActive();
-    moveWithinActive(-1); // Comportamiento intuitivo: borrar y retroceder
+    moveWithinActive(-1); 
     return;
   }
 
