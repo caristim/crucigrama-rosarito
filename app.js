@@ -1,11 +1,12 @@
 /* ========= Util ========= */
 const normalizeLetter = (s) => {
   if (!s) return '';
-  return s.toUpperCase();
+  // Convertimos a mayúsculas y removemos acentos automáticamente para evitar fallos de escritura
+  return s.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 };
 
 function isEditableChar(ch) {
-  return /^[A-ZÁÉÍÓÚÜÑ]$/.test(ch);
+  return /^[A-ZÑ]$/.test(ch);
 }
 
 /* ========= Generador de Sonidos de Sintetizador Nativo ========= */
@@ -21,25 +22,23 @@ function playBeep(type) {
     gain.connect(ctx.destination);
     
     if (type === 'success') {
-      // Pitido alegre ascendente rápido
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Nota Re5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // Nota La5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); 
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); 
       gain.gain.setValueAtTime(0.1, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
       osc.start();
       osc.stop(ctx.currentTime + 0.25);
     } else if (type === 'error') {
-      // Sonido de error grave sordo
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(130.81, ctx.currentTime); // Nota Do3
+      osc.frequency.setValueAtTime(130.81, ctx.currentTime); 
       gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
       osc.start();
       osc.stop(ctx.currentTime + 0.3);
     }
   } catch (e) {
-    console.log("AudioContext bloqueado o no soportado hasta interacción.");
+    console.log("AudioContext bloqueado.");
   }
 }
 
@@ -101,7 +100,7 @@ function buildCellIndex(cw) {
       const rr = row;
       const cc = col + i;
       if (!cell[rr] || !cell[rr][cc] || cell[rr][cc].isBlock) continue;
-      if (cell[rr][cc].solution == null) cell[rr][cc].solution = answer[i];
+      if (cell[rr][cc].solution == null) cell[rr][cc].solution = normalizeLetter(answer[i]);
       cell[rr][cc].belongs.across = { entryNumber: number, index: i };
       if (i === 0) cell[rr][cc].clueNumberAcross = number;
     }
@@ -113,7 +112,7 @@ function buildCellIndex(cw) {
       const rr = row + i;
       const cc = col;
       if (!cell[rr] || !cell[rr][cc] || cell[rr][cc].isBlock) continue;
-      if (cell[rr][cc].solution == null) cell[rr][cc].solution = answer[i];
+      if (cell[rr][cc].solution == null) cell[rr][cc].solution = normalizeLetter(answer[i]);
       cell[rr][cc].belongs.down = { entryNumber: number, index: i };
       if (i === 0) cell[rr][cc].clueNumberDown = number;
     }
@@ -266,7 +265,7 @@ function findEntryStart(dir, entryNumber) {
 }
 
 function moveWithinActive(delta) {
-  if (!state.active) return;
+  if (!state.active) return false;
   const { r, c, dir } = state.active;
 
   const next = getNextEditableCell(r, c, dir, delta);
@@ -287,33 +286,29 @@ function checkCurrentWord() {
   let wordCells = [];
   let complete = true;
 
-  // Almacenamos todas las celdas físicas de esta palabra específica
   for (let i = 0; i < len; i++) {
     const rr = dir === 'across' ? start.row : start.row + i;
     const cc = dir === 'across' ? start.col + i : start.col;
     const cell = cellIndex[rr][cc];
     wordCells.push(cell);
-    if (!cell.user) complete = false; // Falta alguna letra por rellenar
+    if (!cell.user) complete = false; 
   }
 
-  // Si la palabra está completamente escrita por el usuario, la evaluamos de inmediato
   if (complete) {
     let wordIsCorrect = true;
     for (let i = 0; i < len; i++) {
-      if (wordCells[i].user !== start.answer[i]) {
+      if (wordCells[i].user !== normalizeLetter(start.answer[i])) {
         wordIsCorrect = false;
         break;
       }
     }
 
-    // Disparar efectos y sonidos de respuesta
     if (wordIsCorrect) {
       playBeep('success');
     } else {
       playBeep('error');
     }
 
-    // Forzamos actualización visual inmediata para este grupo de celdas
     for (let i = 0; i < len; i++) {
       const rr = dir === 'across' ? start.row : start.row + i;
       const cc = dir === 'across' ? start.col + i : start.col;
@@ -336,11 +331,9 @@ function setCharAtActive(ch) {
   cell.user = ch;
   updateCellDom(r, c);
 
-  // Comprobar la palabra antes de saltar a la siguiente celda
   checkCurrentWord();
 
   const moved = moveWithinActive(+1);
-  // Si ya no se pudo mover adelante porque terminó el tablero/palabra, re-evaluamos visuals generales
   if (!moved && state.checkMode) applyCheckVisuals();
 }
 
@@ -350,7 +343,6 @@ function clearAtActive() {
   const cell = cellIndex[r][c];
   if (cell.isBlock) return;
 
-  // Al borrar, removemos los estados de acierto/error de esta celda
   cell.user = '';
   updateCellDom(r, c);
   
@@ -392,7 +384,11 @@ function updateActiveInfo() {
   }
   const { dir, entryNumber, indexInEntry } = state.active;
   els.dirText.textContent = dir === 'across' ? 'Horizontal' : 'Vertical';
-  els.entryText.textContent = `${entryNumber} (letra ${indexInEntry + 1})`;
+  
+  // Buscar la pista correspondiente para pintarla arriba de forma amigable
+  const start = findEntryStart(dir, entryNumber);
+  const clueString = start ? start.clue : '—';
+  els.entryText.textContent = `Pista ${entryNumber}: "${clueString}" (letra ${indexInEntry + 1})`;
 }
 
 /* ========= Pistas ========= */
