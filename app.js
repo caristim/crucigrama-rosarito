@@ -1,20 +1,18 @@
 /* ========= Util ========= */
 const normalizeLetter = (s) => {
   if (!s) return '';
-  // Convertimos a mayúsculas, respetando Ñ
   return s.toUpperCase();
 };
 
 function isEditableChar(ch) {
-  // A-Z y Ñ/ÁÉÍÓÚÜ (aceptamos todo lo que sea letra)
   return /^[A-ZÁÉÍÓÚÜÑ]$/.test(ch);
 }
 
 /* ========= Estado ========= */
-let cw = null; // crucigrama cargado
+let cw = null; 
 let state = {
-  active: null, // { r, c, dir, entryNumber, entryId }
-  dirPreferred: 'across', // si una casilla pertenece a ambas
+  active: null, 
+  dirPreferred: 'across', 
   checkMode: false
 };
 
@@ -31,13 +29,13 @@ const els = {
 
 /* ========= Loader ========= */
 async function loadIndex() {
-  const res = await fetch('data/index.json', { cache: 'no-store' });
+  const res = await fetch('data/index.json');
   if (!res.ok) throw new Error('No se pudo cargar data/index.json');
   return res.json();
 }
 
 async function loadCrossword(file) {
-  const res = await fetch(`data/crosswords/${file}`, { cache: 'no-store' });
+  const res = await fetch(`data/crosswords/${file}`);
   if (!res.ok) throw new Error(`No se pudo cargar ${file}`);
   return res.json();
 }
@@ -50,30 +48,25 @@ function buildCellIndex(cw) {
       r, c,
       isBlock: cw.grid[r][c] === '#',
       number: null,
-      // soluciones y edición
-      solution: null, // letra correcta
+      solution: null, 
       clueNumberAcross: null,
       clueNumberDown: null,
-      belongs: { across: null, down: null }, // entryNumber -> meta
-      // user state
+      belongs: { across: null, down: null }, 
       user: ''
     }))
   );
 
-  // Numeración + mapping entries -> celdas
   const across = cw.entries?.across ?? [];
   const down = cw.entries?.down ?? [];
 
-  // Para mantener coherencia, asumimos que los entry answer encajan en la cuadrícula
   for (const e of across) {
     const { number, row, col, answer } = e;
     for (let i = 0; i < answer.length; i++) {
       const rr = row;
       const cc = col + i;
-      if (cell[rr]?.[cc]?.isBlock) continue;
+      if (!cell[rr] || !cell[rr][cc] || cell[rr][cc].isBlock) continue;
       if (cell[rr][cc].solution == null) cell[rr][cc].solution = answer[i];
       cell[rr][cc].belongs.across = { entryNumber: number, index: i };
-      // número visual al inicio
       if (i === 0) cell[rr][cc].clueNumberAcross = number;
     }
   }
@@ -83,15 +76,13 @@ function buildCellIndex(cw) {
     for (let i = 0; i < answer.length; i++) {
       const rr = row + i;
       const cc = col;
-      if (cell[rr]?.[cc]?.isBlock) continue;
+      if (!cell[rr] || !cell[rr][cc] || cell[rr][cc].isBlock) continue;
       if (cell[rr][cc].solution == null) cell[rr][cc].solution = answer[i];
       cell[rr][cc].belongs.down = { entryNumber: number, index: i };
       if (i === 0) cell[rr][cc].clueNumberDown = number;
     }
   }
 
-  // Número visible:
-  // En crucigramas, normalmente se numera si inicia una across o down.
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const a = cell[r][c].clueNumberAcross;
@@ -104,7 +95,7 @@ function buildCellIndex(cw) {
 }
 
 /* ========= Render ========= */
-let cellIndex = null; // grid model with user state
+let cellIndex = null; 
 
 function renderBoard() {
   const { rows, cols } = cw.size;
@@ -136,13 +127,6 @@ function renderBoard() {
         div.addEventListener('pointerdown', (ev) => {
           ev.preventDefault();
           selectCell(r, c);
-          div.focus?.();
-        });
-
-        div.addEventListener('keydown', (ev) => {
-          // por si alguien usa teclado sobre celda
-          // (no es obligatorio porque capturamos globalmente)
-          ev.preventDefault();
         });
       }
 
@@ -150,21 +134,19 @@ function renderBoard() {
     }
   }
 
-  // Aplicar estado visual de correct/wrong si checkMode
   applyCheckVisuals();
-
   updateActiveInfo();
 }
 
 function updateCellDom(r, c) {
-  // actualizar solo la celda enfocada/afectada
   const selector = `.cell[data-r="${r}"][data-c="${c}"] .ch`;
   const target = els.board.querySelector(selector);
   if (target) target.textContent = cellIndex[r][c].user || '';
 }
 
-/* ========= Selección (orientación 2) ========= */
+/* ========= Selección ========= */
 function cellToPossibleDirs(r, c) {
+  if (!cellIndex[r] || !cellIndex[r][c]) return [];
   const cell = cellIndex[r][c];
   if (cell.isBlock) return [];
   const dirs = [];
@@ -174,13 +156,13 @@ function cellToPossibleDirs(r, c) {
 }
 
 function selectCell(r, c) {
+  if (!cellIndex[r] || !cellIndex[r][c]) return;
   const cell = cellIndex[r][c];
   if (cell.isBlock) return;
 
   const possible = cellToPossibleDirs(r, c);
   if (possible.length === 0) return;
 
-  // Si pertenece a ambas, usamos el preferido actual (dirPreferred)
   let dir;
   if (possible.length === 1) dir = possible[0];
   else {
@@ -189,7 +171,7 @@ function selectCell(r, c) {
   }
 
   state.active = getActiveEntryFromCell(r, c, dir);
-  state.dirPreferred = dir; // la próxima vez, favorecemos la última elegida
+  state.dirPreferred = dir; 
   updateActiveInfo();
   renderActiveHighlight();
 }
@@ -216,15 +198,12 @@ function renderActiveHighlight() {
 
 /* ========= Navegación ========= */
 function getNextEditableCell(r, c, dir, delta) {
-  // delta: +1 avanzar, -1 retroceder dentro del mismo entry
+  if (!cellIndex[r] || !cellIndex[r][c]) return null;
   const cell = cellIndex[r][c];
   const belongs = dir === 'across' ? cell.belongs.across : cell.belongs.down;
   if (!belongs) return null;
 
   const nextIndex = belongs.index + delta;
-
-  // Necesitamos saber el inicio del entry para ubicar la celda por index.
-  // MVP: lo sacamos buscando en entries para esa entrada y dir.
   const start = findEntryStart(dir, belongs.entryNumber);
   if (!start) return null;
 
@@ -265,8 +244,8 @@ function setCharAtActive(ch) {
 
   cell.user = ch;
   updateCellDom(r, c);
+  if (state.checkMode) applyCheckVisuals(); // Re-comprobar dinámicamente si está activo
 
-  // al escribir, avanzamos un paso
   moveWithinActive(+1);
 }
 
@@ -278,6 +257,7 @@ function clearAtActive() {
 
   cell.user = '';
   updateCellDom(r, c);
+  if (state.checkMode) applyCheckVisuals();
 }
 
 /* ========= Comprobación ========= */
@@ -292,10 +272,7 @@ function applyCheckVisuals() {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const cell = cellIndex[r][c];
-      if (cell.isBlock) continue;
-
-      if (!cell.user) continue;
-      if (!cell.solution) continue;
+      if (cell.isBlock || !cell.user || !cell.solution) continue;
 
       const div = els.board.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
       if (!div) continue;
@@ -348,10 +325,8 @@ function escapeHtml(s) {
 
 /* ========= Keyboard ========= */
 function onKeyDown(ev) {
-  if (!cw) return;
-  if (!state.active) return;
+  if (!cw || !state.active) return;
 
-  // Si estás escribiendo en un control, ignora (evitamos interferir con select)
   const tag = (ev.target?.tagName ?? '').toLowerCase();
   if (tag === 'select' || tag === 'input' || tag === 'textarea') return;
 
@@ -360,6 +335,7 @@ function onKeyDown(ev) {
   if (key === 'Backspace') {
     ev.preventDefault();
     clearAtActive();
+    moveWithinActive(-1); // Comportamiento intuitivo: borrar y retroceder
     return;
   }
 
@@ -370,12 +346,10 @@ function onKeyDown(ev) {
 
   if (key === 'Tab') {
     ev.preventDefault();
-    // Tab avanza una letra dentro de la dirección actual
     moveWithinActive(ev.shiftKey ? -1 : +1);
     return;
   }
 
-  // letras
   if (key && key.length === 1) {
     const ch = normalizeLetter(key);
     if (isEditableChar(ch)) {
@@ -384,18 +358,12 @@ function onKeyDown(ev) {
       return;
     }
   }
-
-  // Soporte a pegado rápido (opcional)
-  if (ev.ctrlKey || ev.metaKey || key === 'Enter') {
-    // no hacemos nada por ahora
-  }
 }
 
 /* ========= Crucigrama carga ========= */
 async function init() {
   const index = await loadIndex();
 
-  // Poblamos selector
   els.cwSelect.innerHTML = '';
   for (const item of index) {
     const opt = document.createElement('option');
@@ -430,39 +398,40 @@ async function init() {
       }
     }
     renderBoard();
-    // Mantener selección si existiera
   });
 
   document.addEventListener('keydown', onKeyDown);
 }
 
 async function loadAndStart(file) {
-  cw = await loadCrossword(file);
-  state.active = null;
-  state.dirPreferred = 'across';
-  state.checkMode = false;
+  try {
+    cw = await loadCrossword(file);
+    state.active = null;
+    state.dirPreferred = 'across';
+    state.checkMode = false;
+    els.checkBtn.textContent = 'Comprobar';
 
-  cellIndex = buildCellIndex(cw);
-  renderClues();
-  renderBoard();
+    cellIndex = buildCellIndex(cw);
+    renderClues();
+    renderBoard();
 
-  // Seleccionamos primera casilla editable de across si existe
-  const first = findFirstEditableCell(cw);
-  if (first) {
-    // si existe across en esa casilla, preferimos across
-    const possible = cellToPossibleDirs(first.r, first.c);
-    if (possible.includes('across')) state.dirPreferred = 'across';
-    else if (possible.includes('down')) state.dirPreferred = 'down';
-    selectCell(first.r, first.c);
-    renderActiveHighlight();
+    const first = findFirstEditableCell();
+    if (first) {
+      const possible = cellToPossibleDirs(first.r, first.c);
+      if (possible.includes('across')) state.dirPreferred = 'across';
+      else if (possible.includes('down')) state.dirPreferred = 'down';
+      selectCell(first.r, first.c);
+    }
+  } catch (err) {
+    console.error("Error al cargar el crucigrama:", err);
   }
 }
 
-function findFirstEditableCell(cw) {
+function findFirstEditableCell() {
   const { rows, cols } = cw.size;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      if (cellIndex[r][c] && !cellIndex[r][c].isBlock) return { r, c };
+      if (cellIndex[r] && cellIndex[r][c] && !cellIndex[r][c].isBlock) return { r, c };
     }
   }
   return null;
