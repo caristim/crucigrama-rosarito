@@ -15,23 +15,23 @@
   ],
   "entries": {
     "across": [
-      { "number": 1, "row": 0, "col": 0, "answer": "PLANETA", "clue": "Cuerpo celeste que orbita alrededor de una estrella" },
-      { "number": 3, "row": 0, "col": 6, "answer": "MARTE", "clue": "Conocido popularmente como el planeta rojo" },
-      { "number": 4, "row": 2, "col": 0, "answer": "ANIMAL", "clue": "Ser vivo que siente y se mueve por su propio impulso" },
-      { "number": 6, "row": 2, "col": 6, "answer": "RIO", "clue": "Corriente natural de agua continua que va a desembocar en otra o en el mar" },
-      { "number": 7, "row": 3, "col": 0, "answer": "ESCALA", "clue": "Sucesión ordenada de cosas, o la proporción de un mapa" },
-      { "number": 8, "row": 4, "col": 2, "answer": "HOMBRE", "clue": "Ser humano del sexo masculino que ha alcanzado la edad adulta" },
-      { "number": 9, "row": 5, "col": 0, "answer": "TIERRA", "clue": "Tercer planeta del sistema solar, el lugar donde vivimos" },
-      { "number": 10, "row": 6, "col": 0, "answer": "CIENCIA", "clue": "Conjunto de conocimientos estructurados sistemáticamente" },
-      { "number": 11, "row": 8, "col": 4, "answer": "MADRID", "clue": "Capital y ciudad más poblada de España" }
+      { "number": 1, "row": 0, "col": 0, "answer": "GATO", "clue": "Mascota felina doméstica común" },
+      { "number": 3, "row": 0, "col": 6, "answer": "SOL", "clue": "La estrella central de nuestro sistema planetario" },
+      { "number": 4, "row": 2, "col": 0, "answer": "AMARA", "clue": "Sentiría gran afecto por alguien (forma verbal)" },
+      { "number": 6, "row": 2, "col": 6, "answer": "MAR", "clue": "Masa de agua salada que cubre gran parte de la Tierra" },
+      { "number": 7, "row": 3, "col": 0, "answer": "MISA", "clue": "Celebración litúrgica principal en la iglesia católica" },
+      { "number": 8, "row": 4, "col": 2, "answer": "SALUDAR", "clue": "Dirigir a alguien palabras de cortesía o afecto al encontrarlo" },
+      { "number": 9, "row": 5, "col": 0, "answer": "PAN", "clue": "Alimento básico hecho con harina, agua y levadura" },
+      { "number": 10, "row": 6, "col": 0, "answer": "MANZANA", "clue": "Fruta de piel verde, roja o amarilla y pulpa blanca" },
+      { "number": 11, "row": 8, "col": 4, "answer": "ROSA", "clue": "Flor del rosal, muy vistosa y de aroma agradable" }
     ],
     "down": [
-      { "number": 1, "row": 0, "col": 0, "answer": "PARED", "clue": "Obra de albañilería levantada verticalmente para cerrar un espacio" },
-      { "number": 2, "row": 0, "col": 3, "answer": "NIDO", "clue": "Estructura que construyen las aves para poner sus huevos" },
-      { "number": 3, "row": 0, "col": 6, "answer": "MADRE", "clue": "Mujer que ha tenido uno o más hijos" },
-      { "number": 5, "row": 2, "col": 2, "answer": "ISLA", "clue": "Porción de tierra firme rodeada completamente por agua" },
-      { "number": 6, "row": 2, "col": 6, "answer": "ROMA", "clue": "Capital de Italia, conocida como la ciudad eterna" },
-      { "number": 12, "row": 4, "col": 4, "answer": "BARCO", "clue": "Construcción cóncava capaz de flotar en el agua y avanzar por ella" }
+      { "number": 1, "row": 0, "col": 0, "answer": "GAMMA", "clue": "Tercera letra del alfabeto griego, o tipo de rayos muy energéticos" },
+      { "number": 2, "row": 0, "col": 3, "answer": "ORAR", "clue": "Dirigir rezos o peticiones a una divinidad" },
+      { "number": 3, "row": 0, "col": 6, "answer": "SUMAR", "clue": "Operación matemática de añadir cantidades" },
+      { "number": 5, "row": 2, "col": 2, "answer": "ALETA", "clue": "Miembro apendicular que usan los peces para nadar" },
+      { "number": 6, "row": 2, "col": 6, "answer": "MANO", "clue": "Parte del cuerpo humano que va desde la muñeca hasta la punta de los dedos" },
+      { "number": 12, "row": 4, "col": 4, "answer": "UNA", "clue": "Artículo indefinido femenino singular (ej. ____ casa)" }
     ]
   }
 }
