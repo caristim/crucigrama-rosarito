@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Crucigramas (ES) - PWA</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Crucigramas (Español)</div>
+
+    <div class="controls">
+      <label class="label" for="cwSelect">Crucigrama</label>
+      <select id="cwSelect" class="select"></select>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="boardWrap">
+      <div id="board" class="board" role="application" aria-label="Crucigrama"></div>
+      <div class="hintRow">
+        <div class="activeInfo">
+          <div><span class="k">Dirección:</span> <span id="dirText">—</span></div>
+          <div><span class="k">Entrada:</span> <span id="entryText">—</span></div>
+        </div>
+        <div class="buttons">
+          <button id="checkBtn" class="btn">Comprobar</button>
+          <button id="clearBtn" class="btn secondary">Borrar</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="panel">
+        <h2>Notas</h2>
+        <ul class="list">
+          <li>Toca una casilla para activar una entrada (horizontal/vertical).</li>
+          <li>Teclado: escribe letras; <b>Backspace</b> borra.</li>
+          <li>Movimiento: con <b>← → ↑ ↓</b> o <b>Tab</b> avanza según dirección.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>Pistas (MVP)</h2>
+        <div class="clues">
+          <div class="clueGroup">
+            <div class="clueTitle">Horizontal</div>
+            <div id="cluesAcross" class="clueList"></div>
+          </div>
+          <div class="clueGroup">
+            <div class="clueTitle">Vertical</div>
+            <div id="cluesDown" class="clueList"></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span>Modo PWA · Sin servidor · Hecho para móvil y teclado</span>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    // Registrar service worker al final
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
