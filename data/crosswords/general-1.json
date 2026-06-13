@@ -15,23 +15,23 @@
   ],
   "entries": {
     "across": [
-      { "number": 1, "row": 0, "col": 0, "answer": "GATO", "clue": "Mascota felina doméstica común" },
-      { "number": 3, "row": 0, "col": 6, "answer": "SOL", "clue": "La estrella central de nuestro sistema planetario" },
-      { "number": 4, "row": 2, "col": 0, "answer": "AMARA", "clue": "Sentiría gran afecto por alguien (forma verbal)" },
-      { "number": 6, "row": 2, "col": 6, "answer": "MAR", "clue": "Masa de agua salada que cubre gran parte de la Tierra" },
-      { "number": 7, "row": 3, "col": 0, "answer": "MISA", "clue": "Celebración litúrgica principal en la iglesia católica" },
-      { "number": 8, "row": 4, "col": 2, "answer": "SALUDAR", "clue": "Dirigir a alguien palabras de cortesía o afecto al encontrarlo" },
+      { "number": 1, "row": 0, "col": 0, "answer": "GATO", "clue": "Animal felino doméstico que maúlla" },
+      { "number": 3, "row": 0, "col": 6, "answer": "SOL", "clue": "La estrella luminosa que calienta la Tierra" },
+      { "number": 4, "row": 2, "col": 0, "answer": "AMARA", "clue": "Sentiría un amor profundo por alguien" },
+      { "number": 6, "row": 2, "col": 6, "answer": "MAR", "clue": "Masa gigante de agua salada" },
+      { "number": 7, "row": 3, "col": 0, "answer": "MISA", "clue": "Ceremonia religiosa que se realiza en una iglesia" },
+      { "number": 8, "row": 4, "col": 2, "answer": "SALUDAR", "clue": "Decir 'hola' o dar los buenos días a alguien" },
       { "number": 9, "row": 5, "col": 0, "answer": "PAN", "clue": "Alimento básico hecho con harina, agua y levadura" },
-      { "number": 10, "row": 6, "col": 0, "answer": "MANZANA", "clue": "Fruta de piel verde, roja o amarilla y pulpa blanca" },
-      { "number": 11, "row": 8, "col": 4, "answer": "ROSA", "clue": "Flor del rosal, muy vistosa y de aroma agradable" }
+      { "number": 10, "row": 6, "col": 0, "answer": "MANZANA", "clue": "Fruta crujiente que puede ser roja, verde o amarilla" },
+      { "number": 11, "row": 8, "col": 4, "answer": "ROSA", "clue": "Flor muy bella con espinas en su tallo" }
     ],
     "down": [
-      { "number": 1, "row": 0, "col": 0, "answer": "GAMMA", "clue": "Tercera letra del alfabeto griego, o tipo de rayos muy energéticos" },
-      { "number": 2, "row": 0, "col": 3, "answer": "ORAR", "clue": "Dirigir rezos o peticiones a una divinidad" },
-      { "number": 3, "row": 0, "col": 6, "answer": "SUMAR", "clue": "Operación matemática de añadir cantidades" },
-      { "number": 5, "row": 2, "col": 2, "answer": "ALETA", "clue": "Miembro apendicular que usan los peces para nadar" },
-      { "number": 6, "row": 2, "col": 6, "answer": "MANO", "clue": "Parte del cuerpo humano que va desde la muñeca hasta la punta de los dedos" },
-      { "number": 12, "row": 4, "col": 4, "answer": "UNA", "clue": "Artículo indefinido femenino singular (ej. ____ casa)" }
+      { "number": 1, "row": 0, "col": 0, "answer": "GAMMA", "clue": "Tercera letra del alfabeto griego" },
+      { "number": 2, "row": 0, "col": 3, "answer": "ORAR", "clue": "Rezar o hablar con Dios" },
+      { "number": 3, "row": 0, "col": 6, "answer": "SUMAR", "clue": "Operación matemática de juntar o añadir números" },
+      { "number": 5, "row": 2, "col": 2, "answer": "ALETA", "clue": "Extremidad que usan los peces para poder nadar" },
+      { "number": 6, "row": 2, "col": 6, "answer": "MANO", "clue": "Parte del cuerpo con cinco dedos que usas para agarrar cosas" },
+      { "number": 12, "row": 4, "col": 4, "answer": "UNA", "clue": "Número cardinal equivalente a la unidad (femenino)" }
     ]
   }
 }
