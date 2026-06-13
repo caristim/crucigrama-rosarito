@@ -1,13 +1,13 @@
 :root {
   --bg: #0b1220;
   --panel: #0f172a;
-  --panel2: #0b1326;
+  --panel2: #1e293b; /* Fondo más claro para las casillas de escritura */
   --text: #e5e7eb;
   --muted: #9ca3af;
-  --grid: #1f2a44;
-  --block: #0a0f1e;
+  --grid: #334155; /* Bordes de la cuadrícula más notables */
+  --block: #060814; /* Bloques sin letras sumamente oscuros para contraste máximo */
   --accent: #22c55e;
-  --accent2: #60a5fa;
+  --accent2: #38bdf8;
   --danger: #ef4444;
   --focus: #f59e0b;
 }
@@ -88,7 +88,6 @@ body {
   }
 }
 
-/* --- Ajustes para hacer el tablero más grande y adaptativo --- */
 .boardWrap {
   width: 100%;
   max-width: 650px;
@@ -100,48 +99,53 @@ body {
 
 .board {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   background: var(--grid);
   padding: 6px;
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
   width: 100%;
   aspect-ratio: 1 / 1;
 }
 
-.cell {
+/* Casillas JUGABLES: Color muy visible y limpio */
+.cell.editable {
   position: relative;
   background: var(--panel2);
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   user-select: none;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Estado seleccionada / enfocada */
+/* Casillas BLOQUEADAS (Sin letras): Oscuras y claramente inactivas */
+.cell.block {
+  background: var(--block);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9);
+  border-radius: 4px;
+}
+
 .cell.selected {
-  background: rgba(245, 158, 11, 0.15) !important;
+  background: rgba(245, 158, 11, 0.25) !important;
   box-shadow: inset 0 0 0 2px var(--focus);
 }
 
-/* Casillas Correctas (Verde vivo) */
 .cell.correct {
-  background: rgba(34, 197, 94, 0.2) !important;
+  background: rgba(34, 197, 94, 0.25) !important;
   box-shadow: inset 0 0 0 2px var(--accent) !important;
 }
 .cell.correct .ch {
   color: #4ade80 !important;
 }
 
-/* Casillas Erróneas (Rojo vivo) */
 .cell.wrong {
-  background: rgba(239, 68, 68, 0.2) !important;
+  background: rgba(239, 68, 68, 0.25) !important;
   box-shadow: inset 0 0 0 2px var(--danger) !important;
 }
 .cell.wrong .ch {
   color: #f87171 !important;
 }
 
-/* Tamaño de la letra dentro de la casilla */
 .cell .ch {
   position: absolute;
   inset: 0;
@@ -154,24 +158,16 @@ body {
   line-height: 1;
 }
 
-/* Ajuste del número de pista pequeño */
 .cell .num {
   position: absolute;
   top: 3px;
   left: 4px;
   font-size: clamp(0.6rem, 1.8vw, 0.85rem);
   font-weight: 600;
-  color: var(--muted);
+  color: #cbd5e1; /* Números más claros y legibles */
   z-index: 2;
 }
 
-/* Bloques negros */
-.cell.block {
-  background: var(--block);
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.85);
-}
-
-/* Fila de información */
 .hintRow {
   display: flex;
   justify-content: space-between;
@@ -218,7 +214,6 @@ body {
   filter: brightness(1.15);
 }
 
-/* Barra lateral */
 .side {
   display: flex;
   flex-direction: column;
