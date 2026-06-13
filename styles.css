@@ -1,11 +1,11 @@
 :root {
   --bg: #0b1220;
   --panel: #0f172a;
-  --panel2: #1e293b; /* Fondo más claro para las casillas de escritura */
+  --panel2: #1e293b; /* Color visible para las casillas de escribir */
   --text: #e5e7eb;
   --muted: #9ca3af;
-  --grid: #334155; /* Bordes de la cuadrícula más notables */
-  --block: #060814; /* Bloques sin letras sumamente oscuros para contraste máximo */
+  --grid: #334155; /* Bordes que separan las casillas */
+  --block: #050811; /* Súper oscuro para las casillas inactivas sin letras */
   --accent: #22c55e;
   --accent2: #38bdf8;
   --danger: #ef4444;
@@ -108,7 +108,7 @@ body {
   aspect-ratio: 1 / 1;
 }
 
-/* Casillas JUGABLES: Color muy visible y limpio */
+/* Casillas con Letras (Altamente visibles) */
 .cell.editable {
   position: relative;
   background: var(--panel2);
@@ -118,10 +118,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Casillas BLOQUEADAS (Sin letras): Oscuras y claramente inactivas */
+/* Casillas Ciegas/Negras (Sin Letras) */
 .cell.block {
   background: var(--block);
-  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.95);
   border-radius: 4px;
 }
 
@@ -164,7 +164,7 @@ body {
   left: 4px;
   font-size: clamp(0.6rem, 1.8vw, 0.85rem);
   font-weight: 600;
-  color: #cbd5e1; /* Números más claros y legibles */
+  color: #cbd5e1;
   z-index: 2;
 }
 
