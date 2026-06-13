@@ -10,28 +10,28 @@
     ".#.......",
     "...#...#.",
     "....#....",
-    "...#.....",
+    ".#.#.....",
     "#..#....#"
   ],
   "entries": {
     "across": [
-      { "number": 1, "row": 0, "col": 0, "answer": "PLANETA", "clue": "Cuerpo que orbita una estrella" },
-      { "number": 3, "row": 0, "col": 6, "answer": "MARTE", "clue": "Planeta rojo del sistema solar" },
-      { "number": 4, "row": 2, "col": 0, "answer": "ANIMAL", "clue": "Ser vivo no vegetal" },
-      { "number": 6, "row": 2, "col": 6, "answer": "RÍO", "clue": "Corriente de agua" },
-      { "number": 7, "row": 3, "col": 0, "answer": "ESCALA", "clue": "Medida usada en mapas o representación" },
-      { "number": 8, "row": 4, "col": 1, "answer": "HOMBRE", "clue": "Varón adulto" },
-      { "number": 9, "row": 5, "col": 0, "answer": "TIERRA", "clue": "Nuestro planeta" },
-      { "number": 10, "row": 6, "col": 0, "answer": "CIENCIA", "clue": "Conjunto de conocimientos sobre la realidad" },
-      { "number": 11, "row": 7, "col": 0, "answer": "ESPAÑA", "clue": "País que comparte frontera con Portugal y Francia" }
+      { "number": 1, "row": 0, "col": 0, "answer": "PLANETA", "clue": "Cuerpo celeste que orbita alrededor de una estrella" },
+      { "number": 3, "row": 0, "col": 6, "answer": "MARTE", "clue": "Conocido popularmente como el planeta rojo" },
+      { "number": 4, "row": 2, "col": 0, "answer": "ANIMAL", "clue": "Ser vivo que siente y se mueve por su propio impulso" },
+      { "number": 6, "row": 2, "col": 6, "answer": "RIO", "clue": "Corriente natural de agua continua que va a desembocar en otra o en el mar" },
+      { "number": 7, "row": 3, "col": 0, "answer": "ESCALA", "clue": "Sucesión ordenada de cosas, o la proporción de un mapa" },
+      { "number": 8, "row": 4, "col": 2, "answer": "HOMBRE", "clue": "Ser humano del sexo masculino que ha alcanzado la edad adulta" },
+      { "number": 9, "row": 5, "col": 0, "answer": "TIERRA", "clue": "Tercer planeta del sistema solar, el lugar donde vivimos" },
+      { "number": 10, "row": 6, "col": 0, "answer": "CIENCIA", "clue": "Conjunto de conocimientos estructurados sistemáticamente" },
+      { "number": 11, "row": 8, "col": 4, "answer": "MADRID", "clue": "Capital y ciudad más poblada de España" }
     ],
     "down": [
-      { "number": 1, "row": 0, "col": 0, "answer": "PROBAR", "clue": "Intentar algo para verificar" },
-      { "number": 2, "row": 0, "col": 1, "answer": "MÚSICA", "clue": "Arte de combinar sonidos y silencios" },
-      { "number": 5, "row": 1, "col": 3, "answer": "OTROS", "clue": "Personas o cosas distintas" },
-      { "number": 7, "row": 1, "col": 7, "answer": "AGUA", "clue": "Líquido esencial para la vida" },
-      { "number": 8, "row": 3, "col": 4, "answer": "ROCA", "clue": "Masa sólida de origen natural" },
-      { "number": 12, "row": 4, "col": 6, "answer": "SOL", "clue": "Estrella del sistema solar" }
+      { "number": 1, "row": 0, "col": 0, "answer": "PARED", "clue": "Obra de albañilería levantada verticalmente para cerrar un espacio" },
+      { "number": 2, "row": 0, "col": 3, "answer": "NIDO", "clue": "Estructura que construyen las aves para poner sus huevos" },
+      { "number": 3, "row": 0, "col": 6, "answer": "MADRE", "clue": "Mujer que ha tenido uno o más hijos" },
+      { "number": 5, "row": 2, "col": 2, "answer": "ISLA", "clue": "Porción de tierra firme rodeada completamente por agua" },
+      { "number": 6, "row": 2, "col": 6, "answer": "ROMA", "clue": "Capital de Italia, conocida como la ciudad eterna" },
+      { "number": 12, "row": 4, "col": 4, "answer": "BARCO", "clue": "Construcción cóncava capaz de flotar en el agua y avanzar por ella" }
     ]
   }
 }
