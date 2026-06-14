@@ -1,37 +1,28 @@
 {
   "id": "general-1",
-  "title": "Conocimientos generales (9x9) #1",
-  "size": { "rows": 9, "cols": 9 },
+  "title": "Crucigrama General (7x7)",
+  "size": { "rows": 7, "cols": 7 },
   "grid": [
-    ".....#...",
-    "##...#..#",
-    ".....#...",
-    "....#....",
-    ".#.......",
-    "...#...#.",
-    "....#....",
-    ".#.#.....",
-    "#..#....#"
+    "......#",
+    ".#.#.#.",
+    ".......",
+    ".#.#.#.",
+    ".......",
+    ".#.#.#.",
+    "#......"
   ],
   "entries": {
     "across": [
-      { "number": 1, "row": 0, "col": 0, "answer": "GATO", "clue": "Animal felino doméstico que maúlla" },
-      { "number": 3, "row": 0, "col": 6, "answer": "SOL", "clue": "La estrella luminosa que calienta la Tierra" },
-      { "number": 4, "row": 2, "col": 0, "answer": "AMARA", "clue": "Sentiría un amor profundo por alguien" },
-      { "number": 6, "row": 2, "col": 6, "answer": "MAR", "clue": "Masa gigante de agua salada" },
-      { "number": 7, "row": 3, "col": 0, "answer": "MISA", "clue": "Ceremonia religiosa que se realiza en una iglesia" },
-      { "number": 8, "row": 4, "col": 2, "answer": "SALUDAR", "clue": "Decir 'hola' o dar los buenos días a alguien" },
-      { "number": 9, "row": 5, "col": 0, "answer": "PAN", "clue": "Alimento básico hecho con harina, agua y levadura" },
-      { "number": 10, "row": 6, "col": 0, "answer": "MANZANA", "clue": "Fruta crujiente que puede ser roja, verde o amarilla" },
-      { "number": 11, "row": 8, "col": 4, "answer": "ROSA", "clue": "Flor muy bella con espinas en su tallo" }
+      { "number": 1, "row": 0, "col": 0, "answer": "MADRID", "clue": "Capital de España" },
+      { "number": 4, "row": 2, "col": 0, "answer": "AMERICA", "clue": "El segundo continente más grande del planeta" },
+      { "number": 6, "row": 4, "col": 0, "answer": "PLANETA", "clue": "Cuerpo celeste que orbita alrededor de una estrella" },
+      { "number": 7, "row": 6, "col": 1, "answer": "SOLARES", "clue": "Relativos al Sol o que reciben su energía" }
     ],
     "down": [
-      { "number": 1, "row": 0, "col": 0, "answer": "GAMMA", "clue": "Tercera letra del alfabeto griego" },
-      { "number": 2, "row": 0, "col": 3, "answer": "ORAR", "clue": "Rezar o hablar con Dios" },
-      { "number": 3, "row": 0, "col": 6, "answer": "SUMAR", "clue": "Operación matemática de juntar o añadir números" },
-      { "number": 5, "row": 2, "col": 2, "answer": "ALETA", "clue": "Extremidad que usan los peces para poder nadar" },
-      { "number": 6, "row": 2, "col": 6, "answer": "MANO", "clue": "Parte del cuerpo con cinco dedos que usas para agarrar cosas" },
-      { "number": 12, "row": 4, "col": 4, "answer": "UNA", "clue": "Número cardinal equivalente a la unidad (femenino)" }
+      { "number": 1, "row": 0, "col": 0, "answer": "MAPA", "clue": "Representación geográfica de la Tierra" },
+      { "number": 2, "row": 0, "col": 2, "answer": "DIETA", "clue": "Control o regulación de la cantidad y tipo de alimentos" },
+      { "number": 3, "row": 0, "col": 4, "answer": "IMÁN", "clue": "Mineral capaz de atraer el hierro" },
+      { "number": 5, "row": 2, "col": 6, "answer": "ALTAS", "clue": "Que tienen una estatura muy superior a la media" }
     ]
   }
 }
