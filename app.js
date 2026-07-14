@@ -1,97 +1,248 @@
-/* ========= Catálogo de niveles con engranaje corregido y exacto ========= */
-const REMOTE_LEVELS = [
+/* ========= GENERADOR AUTOMÁTICO DE CRUCIGRAMAS ========= */
+// Función que coloca palabras horizontales y verticales en una cuadrícula
+function generateCrossword(wordsAcross, wordsDown, maxRows, maxCols) {
+  // Ordenar palabras por longitud descendente para mejorar la colocación
+  const across = wordsAcross.map((w, i) => ({ ...w, index: i, dir: 'across' }));
+  const down = wordsDown.map((w, i) => ({ ...w, index: i, dir: 'down' }));
+  const allWords = [...across, ...down];
+
+  // Ordenar por longitud descendente
+  allWords.sort((a, b) => b.answer.length - a.answer.length);
+
+  // Inicializar grid vacía
+  const grid = Array.from({ length: maxRows }, () => Array(maxCols).fill(''));
+  const placed = [];
+
+  function canPlace(word, row, col, dir) {
+    const len = word.answer.length;
+    if (dir === 'across') {
+      if (col + len > maxCols) return false;
+      for (let i = 0; i < len; i++) {
+        const r = row;
+        const c = col + i;
+        const cell = grid[r][c];
+        if (cell !== '' && cell !== word.answer[i]) return false;
+      }
+    } else { // down
+      if (row + len > maxRows) return false;
+      for (let i = 0; i < len; i++) {
+        const r = row + i;
+        const c = col;
+        const cell = grid[r][c];
+        if (cell !== '' && cell !== word.answer[i]) return false;
+      }
+    }
+    return true;
+  }
+
+  function placeWord(word, row, col, dir) {
+    const len = word.answer.length;
+    const positions = [];
+    if (dir === 'across') {
+      for (let i = 0; i < len; i++) {
+        const r = row;
+        const c = col + i;
+        grid[r][c] = word.answer[i];
+        positions.push({ r, c });
+      }
+    } else {
+      for (let i = 0; i < len; i++) {
+        const r = row + i;
+        const c = col;
+        grid[r][c] = word.answer[i];
+        positions.push({ r, c });
+      }
+    }
+    placed.push({ word, row, col, dir, positions });
+  }
+
+  function removeWord(word) {
+    const entry = placed.find(p => p.word === word);
+    if (!entry) return;
+    for (const pos of entry.positions) {
+      grid[pos.r][pos.c] = '';
+    }
+    const idx = placed.indexOf(entry);
+    placed.splice(idx, 1);
+  }
+
+  function backtrack(index) {
+    if (index === allWords.length) return true; // todas colocadas
+    const word = allWords[index];
+    const len = word.answer.length;
+    const dir = word.dir;
+    const maxR = dir === 'across' ? maxRows : maxRows - len + 1;
+    const maxC = dir === 'across' ? maxCols - len + 1 : maxCols;
+
+    // Intentar todas las posiciones posibles
+    const positions = [];
+    for (let r = 0; r < maxR; r++) {
+      for (let c = 0; c < maxC; c++) {
+        if (canPlace(word, r, c, dir)) {
+          positions.push({ r, c });
+        }
+      }
+    }
+    // Barajar para obtener variedad
+    shuffle(positions);
+    for (const pos of positions) {
+      placeWord(word, pos.r, pos.c, dir);
+      if (backtrack(index + 1)) return true;
+      removeWord(word);
+    }
+    return false;
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  // Intentar backtracking
+  const success = backtrack(0);
+  if (!success) {
+    throw new Error('No se pudo colocar todas las palabras. Intenta con otras palabras o agranda la cuadrícula.');
+  }
+
+  // Construir la grid con '#' para celdas vacías y letras para las ocupadas
+  const finalGrid = grid.map(row => row.map(cell => (cell === '' ? '#' : cell)).join(''));
+
+  // Generar entries con posiciones y números
+  // Asignar números: primero horizontales, luego verticales, en orden de lista original
+  const allEntries = [...wordsAcross, ...wordsDown];
+  const entries = { across: [], down: [] };
+  let number = 1;
+  for (const w of allEntries) {
+    const placedEntry = placed.find(p => p.word === w);
+    if (!placedEntry) continue;
+    const row = placedEntry.row;
+    const col = placedEntry.col;
+    const dir = placedEntry.dir;
+    const entry = {
+      number: number++,
+      row,
+      col,
+      answer: w.answer,
+      clue: w.clue
+    };
+    if (dir === 'across') {
+      entries.across.push(entry);
+    } else {
+      entries.down.push(entry);
+    }
+  }
+
+  return {
+    grid: finalGrid,
+    entries: entries
+  };
+}
+
+/* ========= CATÁLOGO DE NIVELES (solo palabras y pistas) ========= */
+const LEVEL_DEFS = [
   {
-    title: "Nivel 1: Inicial Rápido (5x5)",
+    title: "Nivel 1: Principiante",
     size: { rows: 5, cols: 5 },
-    grid: [
-      ".....",
-      ".#.#.",
-      ".....",
-      ".#.#.",
-      "....."
-    ],
-    entries: {
+    words: {
       across: [
-        { number: 1, row: 0, col: 0, answer: "GATOS", clue: "Mascotas felinas domésticas que maúllan" },
-        { number: 4, row: 2, col: 0, answer: "AMARE", clue: "Del verbo amar (Futuro: Yo...)" },
-        { number: 5, row: 4, col: 0, answer: "SABER", clue: "Tener conocimiento o información de algo" }
+        { answer: "SOL", clue: "Astro rey" },
+        { answer: "LUNA", clue: "Satélite natural de la Tierra" }
       ],
       down: [
-        { number: 1, row: 0, col: 0, answer: "GANAS", clue: "Deseo o voluntad de hacer una cosa" },
-        { number: 2, row: 0, col: 2, answer: "TECHO", clue: "Parte superior que cubre una casa o habitación" },
-        { number: 3, row: 0, col: 4, answer: "SERES", clue: "Organismos vivos, humanos, animales o plantas" }
+        { answer: "SAL", clue: "Condimento" },
+        { answer: "UNO", clue: "Número uno" }
       ]
     }
   },
   {
-    title: "Nivel 2: Desafío Básico (8x8)",
+    title: "Nivel 2: Fácil",
+    size: { rows: 6, cols: 6 },
+    words: {
+      across: [
+        { answer: "CASA", clue: "Vivienda" },
+        { answer: "PERRO", clue: "Animal doméstico" },
+        { answer: "GATO", clue: "Felino" }
+      ],
+      down: [
+        { answer: "CABAL", clue: "Relativo al caballo" },
+        { answer: "ARPA", clue: "Instrumento de cuerda" },
+        { answer: "OTOÑO", clue: "Estación del año" }
+      ]
+    }
+  },
+  {
+    title: "Nivel 3: Intermedio",
     size: { rows: 8, cols: 8 },
-    grid: [
-      ".......#",
-      ".#.#.#.#",
-      "........",
-      ".#.#.#.#",
-      "........",
-      ".#.#.#.#",
-      "........",
-      "#.#.#.#."
-    ],
-    entries: {
+    words: {
       across: [
-        { number: 1, row: 0, col: 0, answer: "LONDRES", clue: "Capital del Reino Unido, famosa por el Big Ben" },
-        { number: 3, row: 2, col: 0, answer: "FRANCIA", clue: "País europeo cuna de la Torre Eiffel y el buen queso" },
-        { number: 5, row: 4, col: 0, answer: "PLANETA", clue: "Cuerpo celeste como la Tierra o Júpiter" },
-        { number: 6, row: 6, col: 0, answer: "ESCUELA", clue: "Establecimiento público donde se enseña a los alumnos" }
+        { answer: "BICICLETA", clue: "Vehículo de dos ruedas" },
+        { answer: "TELEVISION", clue: "Aparato que recibe imágenes" },
+        { answer: "COMPUTADORA", clue: "Ordenador" },
+        { answer: "ESCUELA", clue: "Centro de enseñanza" }
       ],
       down: [
-        { number: 1, row: 0, col: 0, answer: "LUPA", clue: "Lente óptica usada para ampliar la visión de objetos chicos" },
-        { number: 2, row: 0, col: 2, answer: "DIARIO", clue: "Periódico de publicación cotidiana impreso o digital" },
-        { number: 3, row: 0, col: 4, answer: "RANA", clue: "Anfibio pequeño saltador de piel húmeda que croa" },
-        { number: 4, row: 0, col: 6, answer: "SALA", clue: "Espacio o estancia principal de una vivienda" }
+        { answer: "BOTE", clue: "Embarcación pequeña" },
+        { answer: "LAPIZ", clue: "Instrumento de escritura" },
+        { answer: "CUADERNO", clue: "Conjunto de hojas" },
+        { answer: "MESA", clue: "Mueble con tablero" }
       ]
     }
   },
   {
-    title: "Nivel 3: Crucigrama Estándar (9x9)",
-    size: { rows: 9, cols: 9 },
-    grid: [
-      ".........",
-      "#.#.#.#.#",
-      ".........",
-      "#.#.#.#.#",
-      ".........",
-      "#.#.#.#.#",
-      ".........",
-      "#.#.#.#.#",
-      "........."
-    ],
-    entries: {
+    title: "Nivel 4: Avanzado",
+    size: { rows: 10, cols: 10 },
+    words: {
       across: [
-        { number: 1, row: 0, col: 0, answer: "ARGENTINA", clue: "País sudamericano famoso por el tango, el mate y Maradona" },
-        { number: 4, row: 2, col: 0, answer: "BARCELONA", clue: "Ciudad de España conocida por las obras arquitectónicas de Gaudí" },
-        { number: 6, row: 4, col: 0, answer: "CHOCOLATE", clue: "Alimento dulce obtenido de mezclar azúcar con pasta de cacao" },
-        { number: 7, row: 6, col: 0, answer: "DROMEDARIO", clue: "Animal rumiante similar al camello pero con una sola joroba" },
-        { number: 8, row: 8, col: 0, answer: "EDUCACION", clue: "Proceso de socialización y aprendizaje formal de las personas" }
+        { answer: "ASTRONOMIA", clue: "Ciencia que estudia los astros" },
+        { answer: "BIBLIOTECA", clue: "Lugar donde se guardan libros" },
+        { answer: "CIRCULO", clue: "Figura geométrica redonda" },
+        { answer: "DOCTOR", clue: "Médico" },
+        { answer: "ELEFANTE", clue: "Mamífero con trompa" }
       ],
       down: [
-        { number: 1, row: 0, col: 0, answer: "ABC", clue: "Las tres primeras letras que abren el abecedario" },
-        { number: 2, row: 0, col: 2, answer: "GARABATO", clue: "Trazo irregular hecho con el lápiz que no tiene sentido" },
-        { number: 3, row: 0, col: 4, answer: "NOCION", clue: "Idea o conocimiento elemental que se posee sobre algo" },
-        { number: 5, row: 0, col: 6, answer: "ATAR", clue: "Sujetar o amarrar un objeto utilizando cuerdas o lazos" }
+        { answer: "AGUA", clue: "Líquido incoloro" },
+        { answer: "BOSQUE", clue: "Lugar con muchos árboles" },
+        { answer: "CIELO", clue: "Atmósfera vista desde abajo" },
+        { answer: "DIENTE", clue: "Órgano de la boca" },
+        { answer: "ESTRELLA", clue: "Cuerpo celeste que brilla" }
+      ]
+    }
+  },
+  {
+    title: "Nivel 5: Experto",
+    size: { rows: 12, cols: 12 },
+    words: {
+      across: [
+        { answer: "ARQUITECTURA", clue: "Arte de construir edificios" },
+        { answer: "BIOLOGIA", clue: "Ciencia de la vida" },
+        { answer: "CHOCOLATE", clue: "Dulce hecho de cacao" },
+        { answer: "DICCIONARIO", clue: "Libro con definiciones" },
+        { answer: "ECONOMIA", clue: "Ciencia de la administración" },
+        { answer: "FOTOGRAFIA", clue: "Arte de capturar imágenes" }
+      ],
+      down: [
+        { answer: "ALGEBRA", clue: "Rama de las matemáticas" },
+        { answer: "BOTANICA", clue: "Ciencia de las plantas" },
+        { answer: "CINE", clue: "Arte de las películas" },
+        { answer: "DANZA", clue: "Arte de bailar" },
+        { answer: "ESCULTURA", clue: "Arte de modelar figuras" },
+        { answer: "FISICA", clue: "Ciencia de la materia" }
       ]
     }
   }
 ];
 
-/* ========= Estado de la App ========= */
-let currentLevelIndex = 0; 
-let cw = null; 
+/* ========= ESTADO DE LA APP ========= */
+let currentLevelIndex = 0;
+let cw = null;
 let state = {
-  active: null, 
-  dirPreferred: 'across', 
+  active: null,
+  dirPreferred: 'across',
   checkMode: false
 };
-let cellIndex = null; 
+let cellIndex = null;
 
 const els = {
   board: document.getElementById('board'),
@@ -106,7 +257,7 @@ const els = {
   hiddenInput: document.getElementById('hiddenInput')
 };
 
-/* ========= Lógica de Normalización ========= */
+/* ========= LÓGICA DE NORMALIZACIÓN ========= */
 const normalizeLetter = (s) => {
   if (!s) return '';
   return s.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -116,7 +267,7 @@ function isEditableChar(ch) {
   return /^[A-ZÑ]$/.test(ch);
 }
 
-/* ========= PERSISTENCIA: Guardar y Cargar ========= */
+/* ========= PERSISTENCIA ========= */
 function getStorageKey() {
   return `cw_progress_level_${currentLevelIndex}`;
 }
@@ -125,7 +276,6 @@ function saveProgress() {
   if (!cw || !cellIndex) return;
   const { rows, cols } = cw.size;
   const progressData = [];
-
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (!cellIndex[r][c].isBlock) {
@@ -151,16 +301,17 @@ function loadProgress() {
   }
 }
 
-/* ========= Modelado de Tablero ========= */
+/* ========= CONSTRUCCIÓN DEL TABLERO A PARTIR DEL CRUCIGRAMA GENERADO ========= */
 function buildCellIndex(levelData) {
   const { rows, cols } = levelData.size;
+  const gridLines = levelData.grid; // array de strings
   const cell = Array.from({ length: rows }, (_, r) =>
     Array.from({ length: cols }, (_, c) => ({
       r, c,
-      isBlock: levelData.grid[r][c] === '#',
+      isBlock: gridLines[r][c] === '#',
       number: null,
-      solution: null, 
-      belongs: { across: null, down: null }, 
+      solution: null,
+      belongs: { across: null, down: null },
       user: ''
     }))
   );
@@ -168,25 +319,29 @@ function buildCellIndex(levelData) {
   const across = levelData.entries?.across ?? [];
   const down = levelData.entries?.down ?? [];
 
+  // Asignar horizontales
   for (const e of across) {
     const { number, row, col, answer } = e;
-    for (let i = 0; i < answer.length; i++) {
+    const normalized = normalizeLetter(answer);
+    for (let i = 0; i < normalized.length; i++) {
       const rr = row;
       const cc = col + i;
-      if (!cell[rr] || !cell[rr][cc] || cell[rr][cc].isBlock) continue;
-      cell[rr][cc].solution = normalizeLetter(answer[i]);
+      if (rr >= rows || cc >= cols || cell[rr][cc].isBlock) continue;
+      cell[rr][cc].solution = normalized[i];
       cell[rr][cc].belongs.across = { entryNumber: number, index: i };
       if (i === 0) cell[rr][cc].number = number;
     }
   }
 
+  // Asignar verticales
   for (const e of down) {
     const { number, row, col, answer } = e;
-    for (let i = 0; i < answer.length; i++) {
+    const normalized = normalizeLetter(answer);
+    for (let i = 0; i < normalized.length; i++) {
       const rr = row + i;
       const cc = col;
-      if (!cell[rr] || !cell[rr][cc] || cell[rr][cc].isBlock) continue;
-      cell[rr][cc].solution = normalizeLetter(answer[i]);
+      if (rr >= rows || cc >= cols || cell[rr][cc].isBlock) continue;
+      cell[rr][cc].solution = normalized[i];
       cell[rr][cc].belongs.down = { entryNumber: number, index: i };
       if (i === 0 && cell[rr][cc].number === null) cell[rr][cc].number = number;
     }
@@ -195,7 +350,7 @@ function buildCellIndex(levelData) {
   return cell;
 }
 
-/* ========= Renderizado ========= */
+/* ========= RENDERIZADO ========= */
 function renderBoard() {
   const { rows, cols } = cw.size;
   els.board.innerHTML = '';
@@ -226,7 +381,7 @@ function renderBoard() {
         div.addEventListener('pointerdown', (ev) => {
           ev.preventDefault();
           selectCell(r, c);
-          if(els.hiddenInput) { els.hiddenInput.value = ''; els.hiddenInput.focus(); }
+          if (els.hiddenInput) { els.hiddenInput.value = ''; els.hiddenInput.focus(); }
         });
       }
       els.board.appendChild(div);
@@ -242,7 +397,7 @@ function updateCellDom(r, c) {
   if (target) target.textContent = cellIndex[r][c].user || '';
 }
 
-/* ========= Selección y Control de Dirección ========= */
+/* ========= SELECCIÓN Y CONTROL DE DIRECCIÓN ========= */
 function cellToPossibleDirs(r, c) {
   if (!cellIndex[r] || !cellIndex[r][c]) return [];
   const cell = cellIndex[r][c];
@@ -290,7 +445,6 @@ function renderActiveHighlight() {
   if (target) target.classList.add('selected');
 }
 
-/* ========= Avance Automático de Casilla ========= */
 function moveWithinActive(delta) {
   if (!state.active) return;
   const { dir, entryNumber, indexInEntry } = state.active;
@@ -305,15 +459,16 @@ function moveWithinActive(delta) {
   selectCell(rr, cc, dir);
 }
 
-/* ========= Escritura y Teclas ========= */
+/* ========= ESCRITURA Y COMPROBACIÓN ========= */
 function setCharAtActive(ch) {
   if (!state.active) return;
   const { r, c } = state.active;
   cellIndex[r][c].user = ch;
   updateCellDom(r, c);
-  saveProgress(); 
+  saveProgress();
   if (state.checkMode) applyCheckVisuals();
   moveWithinActive(+1);
+  checkLevelComplete();
 }
 
 function clearAtActive() {
@@ -323,8 +478,9 @@ function clearAtActive() {
   updateCellDom(r, c);
   const div = els.board.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
   if (div) div.classList.remove('correct', 'wrong');
-  saveProgress(); 
+  saveProgress();
   moveWithinActive(-1);
+  checkLevelComplete();
 }
 
 function applyCheckVisuals() {
@@ -352,7 +508,6 @@ function updateActiveInfo() {
   els.entryText.textContent = entry ? `Pista ${entryNumber}: "${entry.clue}" (Letra ${indexInEntry + 1})` : '—';
 }
 
-/* ========= Renderizado de Pistas ========= */
 function renderClues() {
   els.cluesAcross.innerHTML = ''; els.cluesDown.innerHTML = '';
   const generate = (container, list, dir) => {
@@ -369,18 +524,58 @@ function renderClues() {
   generate(els.cluesDown, cw.entries.down, 'down');
 }
 
-/* ========= Control de Flujo de Niveles ========= */
-function startLevel(index) {
-  localStorage.setItem('cw_current_level_index', index % REMOTE_LEVELS.length);
+/* ========= COMPROBACIÓN DE NIVEL COMPLETADO ========= */
+function checkLevelComplete() {
+  const { rows, cols } = cw.size;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = cellIndex[r][c];
+      if (!cell.isBlock) {
+        if (cell.user !== cell.solution) return false;
+      }
+    }
+  }
+  // Nivel completado
+  alert("🎉 ¡Nivel completado! Pasando al siguiente...");
+  startLevel(currentLevelIndex + 1);
+  return true;
+}
 
-  currentLevelIndex = index % REMOTE_LEVELS.length; 
-  cw = REMOTE_LEVELS[currentLevelIndex];
+/* ========= INICIO DE NIVEL ========= */
+function startLevel(index) {
+  const total = LEVEL_DEFS.length;
+  currentLevelIndex = ((index % total) + total) % total;
+  localStorage.setItem('cw_current_level_index', currentLevelIndex);
+
+  const def = LEVEL_DEFS[currentLevelIndex];
+  const { rows, cols } = def.size;
+
+  // Generar el crucigrama a partir de las palabras
+  const acrossWords = def.words.across || [];
+  const downWords = def.words.down || [];
+  let generated;
+  try {
+    generated = generateCrossword(acrossWords, downWords, rows, cols);
+  } catch (e) {
+    alert('Error al generar el crucigrama: ' + e.message);
+    // Intentar con el siguiente nivel
+    startLevel(currentLevelIndex + 1);
+    return;
+  }
+
+  // Construir el objeto cw (compatible con el resto del código)
+  cw = {
+    title: def.title,
+    size: { rows, cols },
+    grid: generated.grid,
+    entries: generated.entries
+  };
 
   state.active = null;
   state.dirPreferred = 'across';
   state.checkMode = false;
   els.checkBtn.textContent = 'Comprobar';
-  els.levelIndicator.textContent = `Nivel ${currentLevelIndex + 1}: ${cw.size.rows}x${cw.size.cols}`;
+  els.levelIndicator.textContent = `Nivel ${currentLevelIndex + 1}: ${def.title}`;
 
   cellIndex = buildCellIndex(cw);
   loadProgress();
@@ -388,17 +583,18 @@ function startLevel(index) {
   renderClues();
   renderBoard();
 
-  for (let r = 0; r < cw.size.rows; r++) {
-    for (let c = 0; c < cw.size.cols; c++) {
+  // Seleccionar la primera celda editable
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
       if (!cellIndex[r][c].isBlock) { selectCell(r, c); return; }
     }
   }
 }
 
-/* ========= Eventos e Inicialización ========= */
+/* ========= EVENTOS E INICIALIZACIÓN ========= */
 function init() {
   els.toggleDirBtn.addEventListener('click', (e) => { e.preventDefault(); toggleDirection(); });
-  
+
   els.nextLevelBtn.addEventListener('click', () => {
     startLevel(currentLevelIndex + 1);
   });
@@ -431,7 +627,6 @@ function init() {
 
   const lastSavedLevel = localStorage.getItem('cw_current_level_index');
   const levelToStart = lastSavedLevel !== null ? parseInt(lastSavedLevel, 10) : 0;
-
   startLevel(levelToStart);
 }
 
