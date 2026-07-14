@@ -1,4 +1,4 @@
-const CACHE = 'crucigramas-es-v5';
+const CACHE = 'crucigramas-es-v6';
 const CORE = [
   './',
   './index.html',
