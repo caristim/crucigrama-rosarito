@@ -1,15 +1,16 @@
-/* ========= GENERADOR AUTOMÁTICO DE CRUCIGRAMAS ========= */
+/* ========= GENERADOR AUTOMÁTICO CON BANCO DE PALABRAS ALEATORIO ========= */
+
+// Función para barajar array (Fisher-Yates)
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // Función que coloca palabras horizontales y verticales en una cuadrícula
-function generateCrossword(wordsAcross, wordsDown, maxRows, maxCols) {
-  // Ordenar palabras por longitud descendente para mejorar la colocación
-  const across = wordsAcross.map((w, i) => ({ ...w, index: i, dir: 'across' }));
-  const down = wordsDown.map((w, i) => ({ ...w, index: i, dir: 'down' }));
-  const allWords = [...across, ...down];
-
-  // Ordenar por longitud descendente
-  allWords.sort((a, b) => b.answer.length - a.answer.length);
-
-  // Inicializar grid vacía
+function tryPlaceWords(acrossCandidates, downCandidates, maxRows, maxCols) {
   const grid = Array.from({ length: maxRows }, () => Array(maxCols).fill(''));
   const placed = [];
 
@@ -23,7 +24,7 @@ function generateCrossword(wordsAcross, wordsDown, maxRows, maxCols) {
         const cell = grid[r][c];
         if (cell !== '' && cell !== word.answer[i]) return false;
       }
-    } else { // down
+    } else {
       if (row + len > maxRows) return false;
       for (let i = 0; i < len; i++) {
         const r = row + i;
@@ -66,15 +67,19 @@ function generateCrossword(wordsAcross, wordsDown, maxRows, maxCols) {
     placed.splice(idx, 1);
   }
 
+  // Ordenar todas las palabras por longitud descendente (mejor para backtracking)
+  const allWords = [...acrossCandidates.map(w => ({ ...w, dir: 'across' })),
+                    ...downCandidates.map(w => ({ ...w, dir: 'down' }))];
+  allWords.sort((a, b) => b.answer.length - a.answer.length);
+
   function backtrack(index) {
-    if (index === allWords.length) return true; // todas colocadas
+    if (index === allWords.length) return true;
     const word = allWords[index];
     const len = word.answer.length;
     const dir = word.dir;
     const maxR = dir === 'across' ? maxRows : maxRows - len + 1;
     const maxC = dir === 'across' ? maxCols - len + 1 : maxCols;
 
-    // Intentar todas las posiciones posibles
     const positions = [];
     for (let r = 0; r < maxR; r++) {
       for (let c = 0; c < maxC; c++) {
@@ -83,7 +88,6 @@ function generateCrossword(wordsAcross, wordsDown, maxRows, maxCols) {
         }
       }
     }
-    // Barajar para obtener variedad
     shuffle(positions);
     for (const pos of positions) {
       placeWord(word, pos.r, pos.c, dir);
@@ -93,134 +97,195 @@ function generateCrossword(wordsAcross, wordsDown, maxRows, maxCols) {
     return false;
   }
 
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-  }
-
-  // Intentar backtracking
-  const success = backtrack(0);
-  if (!success) {
-    throw new Error('No se pudo colocar todas las palabras. Intenta con otras palabras o agranda la cuadrícula.');
-  }
-
-  // Construir la grid con '#' para celdas vacías y letras para las ocupadas
-  const finalGrid = grid.map(row => row.map(cell => (cell === '' ? '#' : cell)).join(''));
-
-  // Generar entries con posiciones y números
-  // Asignar números: primero horizontales, luego verticales, en orden de lista original
-  const allEntries = [...wordsAcross, ...wordsDown];
-  const entries = { across: [], down: [] };
-  let number = 1;
-  for (const w of allEntries) {
-    const placedEntry = placed.find(p => p.word === w);
-    if (!placedEntry) continue;
-    const row = placedEntry.row;
-    const col = placedEntry.col;
-    const dir = placedEntry.dir;
-    const entry = {
-      number: number++,
-      row,
-      col,
-      answer: w.answer,
-      clue: w.clue
-    };
-    if (dir === 'across') {
-      entries.across.push(entry);
-    } else {
-      entries.down.push(entry);
-    }
-  }
-
-  return {
-    grid: finalGrid,
-    entries: entries
-  };
+  return backtrack(0) ? { grid, placed } : null;
 }
 
-/* ========= CATÁLOGO DE NIVELES (solo palabras y pistas) ========= */
-const LEVEL_DEFS = [
+// Función principal: selecciona palabras aleatorias y genera el crucigrama
+function generateCrossword(wordBankAcross, wordBankDown, maxRows, maxCols, maxAttempts = 10) {
+  // Filtrar palabras que puedan caber
+  const validAcross = wordBankAcross.filter(w => w.answer.length <= maxCols);
+  const validDown = wordBankDown.filter(w => w.answer.length <= maxRows);
+
+  if (validAcross.length === 0 || validDown.length === 0) {
+    throw new Error('No hay palabras que quepan en la cuadrícula');
+  }
+
+  // Determinar cuántas palabras queremos colocar (aproximadamente la mitad del grid ocupado)
+  const targetAcross = Math.min(validAcross.length, Math.floor((maxRows + maxCols) / 4) + 1);
+  const targetDown = Math.min(validDown.length, Math.floor((maxRows + maxCols) / 4) + 1);
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    // Seleccionar aleatoriamente un subconjunto
+    const shuffledAcross = shuffle([...validAcross]);
+    const shuffledDown = shuffle([...validDown]);
+    const selectedAcross = shuffledAcross.slice(0, targetAcross);
+    const selectedDown = shuffledDown.slice(0, targetDown);
+
+    const result = tryPlaceWords(selectedAcross, selectedDown, maxRows, maxCols);
+    if (result) {
+      // Construir la grid final con '#' y letras
+      const finalGrid = result.grid.map(row => row.map(cell => (cell === '' ? '#' : cell)).join(''));
+
+      // Generar entries (asignar números)
+      const allEntries = [...selectedAcross, ...selectedDown];
+      const entries = { across: [], down: [] };
+      let number = 1;
+      for (const w of allEntries) {
+        const placedEntry = result.placed.find(p => p.word === w);
+        if (!placedEntry) continue;
+        const entry = {
+          number: number++,
+          row: placedEntry.row,
+          col: placedEntry.col,
+          answer: w.answer,
+          clue: w.clue
+        };
+        if (placedEntry.dir === 'across') {
+          entries.across.push(entry);
+        } else {
+          entries.down.push(entry);
+        }
+      }
+      return { grid: finalGrid, entries };
+    }
+  }
+  // Si no se pudo después de varios intentos, lanzar error
+  throw new Error('No se pudo generar un crucigrama con las palabras disponibles. Intenta de nuevo.');
+}
+
+/* ========= BANCO DE PALABRAS POR NIVEL (muchas más) ========= */
+const LEVEL_BANKS = [
   {
     title: "Nivel 1: Principiante",
     size: { rows: 5, cols: 5 },
-    words: {
+    bank: {
       across: [
         { answer: "SOL", clue: "Astro rey" },
-        { answer: "LUNA", clue: "Satélite natural de la Tierra" }
+        { answer: "LUNA", clue: "Satélite natural" },
+        { answer: "MAR", clue: "Gran masa de agua salada" },
+        { answer: "CIELO", clue: "Espacio sobre nosotros" },
+        { answer: "AVION", clue: "Medio de transporte aéreo" },
+        { answer: "BANCO", clue: "Mueble para sentarse o entidad" },
+        { answer: "CAMPO", clue: "Terreno extenso" },
+        { answer: "DEDO", clue: "Parte de la mano" },
+        { answer: "ESTE", clue: "Punto cardinal" }
       ],
       down: [
         { answer: "SAL", clue: "Condimento" },
-        { answer: "UNO", clue: "Número uno" }
+        { answer: "UNO", clue: "Número uno" },
+        { answer: "DOS", clue: "Número dos" },
+        { answer: "TRES", clue: "Número tres" },
+        { answer: "ALMA", clue: "Espíritu" },
+        { answer: "BOCA", clue: "Abertura para comer" },
+        { answer: "COLA", clue: "Extremidad de algunos animales" },
+        { answer: "DADO", clue: "Cubo con números" }
       ]
     }
   },
   {
     title: "Nivel 2: Fácil",
     size: { rows: 6, cols: 6 },
-    words: {
+    bank: {
       across: [
         { answer: "CASA", clue: "Vivienda" },
         { answer: "PERRO", clue: "Animal doméstico" },
-        { answer: "GATO", clue: "Felino" }
+        { answer: "GATO", clue: "Felino" },
+        { answer: "PATO", clue: "Ave acuática" },
+        { answer: "RANA", clue: "Anfibio saltador" },
+        { answer: "LOBO", clue: "Animal salvaje similar al perro" },
+        { answer: "OSO", clue: "Mamífero grande" },
+        { answer: "TORO", clue: "Animal bovino" },
+        { answer: "CABRA", clue: "Animal con cuernos" },
+        { answer: "ARBOL", clue: "Planta de tronco leñoso" },
+        { answer: "FLOR", clue: "Parte colorida de una planta" },
+        { answer: "PIEDRA", clue: "Roca" }
       ],
       down: [
         { answer: "CABAL", clue: "Relativo al caballo" },
         { answer: "ARPA", clue: "Instrumento de cuerda" },
-        { answer: "OTOÑO", clue: "Estación del año" }
+        { answer: "OTOÑO", clue: "Estación del año" },
+        { answer: "PRIMAVERA", clue: "Estación de las flores" },
+        { answer: "VERANO", clue: "Estación calurosa" },
+        { answer: "INVIERNO", clue: "Estación fría" },
+        { answer: "CUADRO", clue: "Obra de arte" },
+        { answer: "MUSICA", clue: "Arte de los sonidos" }
       ]
     }
   },
   {
     title: "Nivel 3: Intermedio",
     size: { rows: 8, cols: 8 },
-    words: {
+    bank: {
       across: [
         { answer: "BICICLETA", clue: "Vehículo de dos ruedas" },
         { answer: "TELEVISION", clue: "Aparato que recibe imágenes" },
         { answer: "COMPUTADORA", clue: "Ordenador" },
-        { answer: "ESCUELA", clue: "Centro de enseñanza" }
+        { answer: "ESCUELA", clue: "Centro de enseñanza" },
+        { answer: "LIBRETA", clue: "Cuaderno pequeño" },
+        { answer: "LAPICERO", clue: "Instrumento para escribir" },
+        { answer: "MADERA", clue: "Material de los árboles" },
+        { answer: "VENTANA", clue: "Abertura en la pared" },
+        { answer: "JARDIN", clue: "Terreno con plantas" },
+        { answer: "NUBE", clue: "Masa de vapor en el cielo" },
+        { answer: "LLUVIA", clue: "Agua que cae del cielo" }
       ],
       down: [
         { answer: "BOTE", clue: "Embarcación pequeña" },
         { answer: "LAPIZ", clue: "Instrumento de escritura" },
         { answer: "CUADERNO", clue: "Conjunto de hojas" },
-        { answer: "MESA", clue: "Mueble con tablero" }
+        { answer: "MESA", clue: "Mueble con tablero" },
+        { answer: "SILLA", clue: "Mueble para sentarse" },
+        { answer: "PUERTA", clue: "Abertura para entrar" },
+        { answer: "PIZARRA", clue: "Superficie para escribir" },
+        { answer: "TIZA", clue: "Piedra para escribir en pizarra" },
+        { answer: "REGLA", clue: "Instrumento para medir" }
       ]
     }
   },
   {
     title: "Nivel 4: Avanzado",
     size: { rows: 10, cols: 10 },
-    words: {
+    bank: {
       across: [
         { answer: "ASTRONOMIA", clue: "Ciencia que estudia los astros" },
         { answer: "BIBLIOTECA", clue: "Lugar donde se guardan libros" },
         { answer: "CIRCULO", clue: "Figura geométrica redonda" },
         { answer: "DOCTOR", clue: "Médico" },
-        { answer: "ELEFANTE", clue: "Mamífero con trompa" }
+        { answer: "ELEFANTE", clue: "Mamífero con trompa" },
+        { answer: "FISICA", clue: "Ciencia de la materia y energía" },
+        { answer: "GEOGRAFIA", clue: "Ciencia que estudia la Tierra" },
+        { answer: "HISTORIA", clue: "Narración de hechos pasados" },
+        { answer: "JUGUETE", clue: "Objeto para divertirse" },
+        { answer: "KILO", clue: "Unidad de peso" }
       ],
       down: [
         { answer: "AGUA", clue: "Líquido incoloro" },
         { answer: "BOSQUE", clue: "Lugar con muchos árboles" },
         { answer: "CIELO", clue: "Atmósfera vista desde abajo" },
         { answer: "DIENTE", clue: "Órgano de la boca" },
-        { answer: "ESTRELLA", clue: "Cuerpo celeste que brilla" }
+        { answer: "ESTRELLA", clue: "Cuerpo celeste que brilla" },
+        { answer: "FLORIDA", clue: "Estado de EE.UU." },
+        { answer: "GITANO", clue: "Persona de etnia gitana" },
+        { answer: "HUEVO", clue: "Alimento ovalado" },
+        { answer: "ISLA", clue: "Terreno rodeado de agua" }
       ]
     }
   },
   {
     title: "Nivel 5: Experto",
     size: { rows: 12, cols: 12 },
-    words: {
+    bank: {
       across: [
         { answer: "ARQUITECTURA", clue: "Arte de construir edificios" },
         { answer: "BIOLOGIA", clue: "Ciencia de la vida" },
         { answer: "CHOCOLATE", clue: "Dulce hecho de cacao" },
         { answer: "DICCIONARIO", clue: "Libro con definiciones" },
         { answer: "ECONOMIA", clue: "Ciencia de la administración" },
-        { answer: "FOTOGRAFIA", clue: "Arte de capturar imágenes" }
+        { answer: "FOTOGRAFIA", clue: "Arte de capturar imágenes" },
+        { answer: "GEOGRAFIA", clue: "Ciencia de la Tierra" },
+        { answer: "HISTORIA", clue: "Estudio del pasado" },
+        { answer: "INFORMATICA", clue: "Ciencia de los datos" },
+        { answer: "JARDINERIA", clue: "Arte de cultivar jardines" }
       ],
       down: [
         { answer: "ALGEBRA", clue: "Rama de las matemáticas" },
@@ -228,13 +293,15 @@ const LEVEL_DEFS = [
         { answer: "CINE", clue: "Arte de las películas" },
         { answer: "DANZA", clue: "Arte de bailar" },
         { answer: "ESCULTURA", clue: "Arte de modelar figuras" },
-        { answer: "FISICA", clue: "Ciencia de la materia" }
+        { answer: "FISICA", clue: "Ciencia de la materia" },
+        { answer: "GEOLOGIA", clue: "Ciencia de la Tierra" },
+        { answer: "HIDROLOGIA", clue: "Ciencia del agua" }
       ]
     }
   }
 ];
 
-/* ========= ESTADO DE LA APP ========= */
+/* ========= RESTO DE LA APP (sin cambios importantes) ========= */
 let currentLevelIndex = 0;
 let cw = null;
 let state = {
@@ -301,10 +368,10 @@ function loadProgress() {
   }
 }
 
-/* ========= CONSTRUCCIÓN DEL TABLERO A PARTIR DEL CRUCIGRAMA GENERADO ========= */
+/* ========= CONSTRUCCIÓN DEL TABLERO ========= */
 function buildCellIndex(levelData) {
   const { rows, cols } = levelData.size;
-  const gridLines = levelData.grid; // array de strings
+  const gridLines = levelData.grid;
   const cell = Array.from({ length: rows }, (_, r) =>
     Array.from({ length: cols }, (_, c) => ({
       r, c,
@@ -319,7 +386,6 @@ function buildCellIndex(levelData) {
   const across = levelData.entries?.across ?? [];
   const down = levelData.entries?.down ?? [];
 
-  // Asignar horizontales
   for (const e of across) {
     const { number, row, col, answer } = e;
     const normalized = normalizeLetter(answer);
@@ -333,7 +399,6 @@ function buildCellIndex(levelData) {
     }
   }
 
-  // Asignar verticales
   for (const e of down) {
     const { number, row, col, answer } = e;
     const normalized = normalizeLetter(answer);
@@ -350,7 +415,7 @@ function buildCellIndex(levelData) {
   return cell;
 }
 
-/* ========= RENDERIZADO ========= */
+/* ========= RENDERIZADO (idéntico a versiones anteriores) ========= */
 function renderBoard() {
   const { rows, cols } = cw.size;
   els.board.innerHTML = '';
@@ -535,35 +600,36 @@ function checkLevelComplete() {
       }
     }
   }
-  // Nivel completado
   alert("🎉 ¡Nivel completado! Pasando al siguiente...");
   startLevel(currentLevelIndex + 1);
   return true;
 }
 
-/* ========= INICIO DE NIVEL ========= */
+/* ========= INICIO DE NIVEL (con generación aleatoria) ========= */
 function startLevel(index) {
-  const total = LEVEL_DEFS.length;
+  const total = LEVEL_BANKS.length;
   currentLevelIndex = ((index % total) + total) % total;
   localStorage.setItem('cw_current_level_index', currentLevelIndex);
 
-  const def = LEVEL_DEFS[currentLevelIndex];
+  const def = LEVEL_BANKS[currentLevelIndex];
   const { rows, cols } = def.size;
 
-  // Generar el crucigrama a partir de las palabras
-  const acrossWords = def.words.across || [];
-  const downWords = def.words.down || [];
+  // Generar crucigrama a partir del banco de palabras
   let generated;
   try {
-    generated = generateCrossword(acrossWords, downWords, rows, cols);
+    generated = generateCrossword(def.bank.across, def.bank.down, rows, cols, 15);
   } catch (e) {
-    alert('Error al generar el crucigrama: ' + e.message);
-    // Intentar con el siguiente nivel
-    startLevel(currentLevelIndex + 1);
-    return;
+    alert('Error al generar el crucigrama: ' + e.message + '\nIntentando de nuevo...');
+    // Reintentar una vez más
+    try {
+      generated = generateCrossword(def.bank.across, def.bank.down, rows, cols, 20);
+    } catch (e2) {
+      alert('No se pudo generar un crucigrama válido. Pasando al siguiente nivel.');
+      startLevel(currentLevelIndex + 1);
+      return;
+    }
   }
 
-  // Construir el objeto cw (compatible con el resto del código)
   cw = {
     title: def.title,
     size: { rows, cols },
@@ -583,7 +649,7 @@ function startLevel(index) {
   renderClues();
   renderBoard();
 
-  // Seleccionar la primera celda editable
+  // Seleccionar primera celda editable
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (!cellIndex[r][c].isBlock) { selectCell(r, c); return; }
