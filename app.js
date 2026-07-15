@@ -1,4 +1,4 @@
-/* ========= GENERADOR DE CRUCIGRAMAS MEJORADO ========= */
+/* ========= GENERADOR SIMPLE Y CONFIABLE DE CRUCIGRAMAS ========= */
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -9,21 +9,20 @@ function shuffle(arr) {
 }
 
 function generateCrossword(wordBankAcross, wordBankDown, maxRows, maxCols) {
-  // Filtrar palabras que quepan
+  // Filtrar palabras que quepan exactamente
   const across = wordBankAcross.filter(w => w.answer.length <= maxCols);
   const down = wordBankDown.filter(w => w.answer.length <= maxRows);
   
-  if (across.length === 0 || down.length === 0) {
-    throw new Error('No hay palabras disponibles para este tamaño');
-  }
+  // Si no hay suficientes palabras, usar las primeras disponibles
+  const finalAcross = across.length > 0 ? across : wordBankAcross.slice(0, 3);
+  const finalDown = down.length > 0 ? down : wordBankDown.slice(0, 3);
 
-  // Seleccionar palabras aleatorias
-  const shuffledAcross = shuffle([...across]);
-  const shuffledDown = shuffle([...down]);
+  // Seleccionar palabras aleatorias (2-4 de cada tipo según tamaño)
+  const shuffledAcross = shuffle([...finalAcross]);
+  const shuffledDown = shuffle([...finalDown]);
   
-  // Tomar entre 3 y 6 palabras de cada lista según el tamaño
-  const numAcross = Math.min(shuffledAcross.length, Math.max(2, Math.floor((maxRows + maxCols) / 4)));
-  const numDown = Math.min(shuffledDown.length, Math.max(2, Math.floor((maxRows + maxCols) / 4)));
+  const numAcross = Math.min(shuffledAcross.length, Math.max(2, Math.floor((maxRows + maxCols) / 5)));
+  const numDown = Math.min(shuffledDown.length, Math.max(2, Math.floor((maxRows + maxCols) / 5)));
   
   const selectedAcross = shuffledAcross.slice(0, numAcross);
   const selectedDown = shuffledDown.slice(0, numDown);
@@ -32,104 +31,102 @@ function generateCrossword(wordBankAcross, wordBankDown, maxRows, maxCols) {
   const grid = Array.from({ length: maxRows }, () => Array(maxCols).fill(''));
   const placed = [];
 
-  // Colocar palabras horizontales primero (más largas primero)
+  // Función para colocar una palabra
+  function tryPlaceWord(word, dir) {
+    const len = word.answer.length;
+    const positions = [];
+    
+    if (dir === 'across') {
+      for (let r = 0; r < maxRows; r++) {
+        for (let c = 0; c <= maxCols - len; c++) {
+          let canPlace = true;
+          for (let i = 0; i < len; i++) {
+            if (grid[r][c + i] !== '' && grid[r][c + i] !== word.answer[i]) {
+              canPlace = false;
+              break;
+            }
+          }
+          if (canPlace) positions.push({ r, c });
+        }
+      }
+    } else {
+      for (let r = 0; r <= maxRows - len; r++) {
+        for (let c = 0; c < maxCols; c++) {
+          let canPlace = true;
+          for (let i = 0; i < len; i++) {
+            if (grid[r + i][c] !== '' && grid[r + i][c] !== word.answer[i]) {
+              canPlace = false;
+              break;
+            }
+          }
+          if (canPlace) positions.push({ r, c });
+        }
+      }
+    }
+    
+    shuffle(positions);
+    if (positions.length === 0) return false;
+    
+    const pos = positions[0];
+    const wordPos = [];
+    if (dir === 'across') {
+      for (let i = 0; i < len; i++) {
+        grid[pos.r][pos.c + i] = word.answer[i];
+        wordPos.push({ r: pos.r, c: pos.c + i });
+      }
+    } else {
+      for (let i = 0; i < len; i++) {
+        grid[pos.r + i][pos.c] = word.answer[i];
+        wordPos.push({ r: pos.r + i, c: pos.c });
+      }
+    }
+    placed.push({ word, row: pos.r, col: pos.c, dir, positions: wordPos });
+    return true;
+  }
+
+  // Colocar palabras horizontales (más largas primero)
   const sortedAcross = [...selectedAcross].sort((a, b) => b.answer.length - a.answer.length);
-  
   for (const word of sortedAcross) {
-    const len = word.answer.length;
-    const maxCol = maxCols - len;
-    const positions = [];
-    
-    // Buscar todas las posiciones posibles
-    for (let r = 0; r < maxRows; r++) {
-      for (let c = 0; c <= maxCol; c++) {
-        let canPlace = true;
-        for (let i = 0; i < len; i++) {
-          if (grid[r][c + i] !== '' && grid[r][c + i] !== word.answer[i]) {
-            canPlace = false;
-            break;
-          }
-        }
-        if (canPlace) positions.push({ r, c });
-      }
-    }
-    
-    shuffle(positions);
-    if (positions.length === 0) continue;
-    
-    const pos = positions[0];
-    const wordPos = [];
-    for (let i = 0; i < len; i++) {
-      grid[pos.r][pos.c + i] = word.answer[i];
-      wordPos.push({ r: pos.r, c: pos.c + i });
-    }
-    placed.push({ word, row: pos.r, col: pos.c, dir: 'across', positions: wordPos });
+    tryPlaceWord(word, 'across');
   }
 
-  // Colocar palabras verticales
+  // Colocar palabras verticales (más largas primero)
   const sortedDown = [...selectedDown].sort((a, b) => b.answer.length - a.answer.length);
-  
   for (const word of sortedDown) {
-    const len = word.answer.length;
-    const maxRow = maxRows - len;
-    const positions = [];
-    
-    for (let r = 0; r <= maxRow; r++) {
-      for (let c = 0; c < maxCols; c++) {
-        let canPlace = true;
-        for (let i = 0; i < len; i++) {
-          if (grid[r + i][c] !== '' && grid[r + i][c] !== word.answer[i]) {
-            canPlace = false;
-            break;
-          }
-        }
-        if (canPlace) positions.push({ r, c });
-      }
-    }
-    
-    shuffle(positions);
-    if (positions.length === 0) continue;
-    
-    const pos = positions[0];
-    const wordPos = [];
-    for (let i = 0; i < len; i++) {
-      grid[pos.r + i][pos.c] = word.answer[i];
-      wordPos.push({ r: pos.r + i, c: pos.c });
-    }
-    placed.push({ word, row: pos.r, col: pos.c, dir: 'down', positions: wordPos });
+    tryPlaceWord(word, 'down');
   }
 
-  // Si no se colocó nada, usar las primeras palabras
+  // Si no hay palabras colocadas, usar un fallback simple
   if (placed.length === 0) {
-    // Colocar al menos una horizontal y una vertical
-    const fallbackAcross = selectedAcross.slice(0, 2);
-    const fallbackDown = selectedDown.slice(0, 2);
-    
-    for (const word of fallbackAcross) {
-      const len = word.answer.length;
-      if (len <= maxCols) {
+    // Colocar las primeras horizontales en la fila 0
+    for (let i = 0; i < Math.min(3, selectedAcross.length); i++) {
+      const word = selectedAcross[i];
+      if (word.answer.length <= maxCols) {
+        for (let j = 0; j < word.answer.length; j++) {
+          grid[0][j] = word.answer[j];
+        }
         const wordPos = [];
-        for (let i = 0; i < len; i++) {
-          grid[0][i] = word.answer[i];
-          wordPos.push({ r: 0, c: i });
+        for (let j = 0; j < word.answer.length; j++) {
+          wordPos.push({ r: 0, c: j });
         }
         placed.push({ word, row: 0, col: 0, dir: 'across', positions: wordPos });
       }
     }
     
-    for (const word of fallbackDown) {
-      const len = word.answer.length;
-      if (len <= maxRows) {
-        const wordPos = [];
-        for (let i = 0; i < len; i++) {
-          if (grid[i][maxCols-1] === '') {
-            grid[i][maxCols-1] = word.answer[i];
-            wordPos.push({ r: i, c: maxCols-1 });
+    // Colocar las primeras verticales en la columna 0
+    for (let i = 0; i < Math.min(3, selectedDown.length); i++) {
+      const word = selectedDown[i];
+      if (word.answer.length <= maxRows) {
+        for (let j = 0; j < word.answer.length; j++) {
+          if (grid[j][0] === '') {
+            grid[j][0] = word.answer[j];
           }
         }
-        if (wordPos.length === len) {
-          placed.push({ word, row: 0, col: maxCols-1, dir: 'down', positions: wordPos });
+        const wordPos = [];
+        for (let j = 0; j < word.answer.length; j++) {
+          wordPos.push({ r: j, c: 0 });
         }
+        placed.push({ word, row: 0, col: 0, dir: 'down', positions: wordPos });
       }
     }
   }
@@ -137,21 +134,34 @@ function generateCrossword(wordBankAcross, wordBankDown, maxRows, maxCols) {
   // Construir la grid final
   const finalGrid = grid.map(row => row.map(cell => (cell === '' ? '#' : cell)).join(''));
 
-  // Generar entries
+  // Generar entries con números
   const entries = { across: [], down: [] };
   let number = 1;
   
+  // Primero asignar números a las horizontales
   for (const p of placed) {
-    const entry = {
-      number: number++,
-      row: p.row,
-      col: p.col,
-      answer: p.word.answer,
-      clue: p.word.clue
-    };
     if (p.dir === 'across') {
+      const entry = {
+        number: number++,
+        row: p.row,
+        col: p.col,
+        answer: p.word.answer,
+        clue: p.word.clue
+      };
       entries.across.push(entry);
-    } else {
+    }
+  }
+  
+  // Luego a las verticales
+  for (const p of placed) {
+    if (p.dir === 'down') {
+      const entry = {
+        number: number++,
+        row: p.row,
+        col: p.col,
+        answer: p.word.answer,
+        clue: p.word.clue
+      };
       entries.down.push(entry);
     }
   }
@@ -159,7 +169,7 @@ function generateCrossword(wordBankAcross, wordBankDown, maxRows, maxCols) {
   return { grid: finalGrid, entries };
 }
 
-/* ========= BANCO DE PALABRAS ========= */
+/* ========= BANCO DE PALABRAS POR NIVEL ========= */
 const LEVEL_BANKS = [
   {
     title: "Nivel 1: Principiante",
@@ -170,21 +180,14 @@ const LEVEL_BANKS = [
         { answer: "LUNA", clue: "Satélite natural" },
         { answer: "MAR", clue: "Gran masa de agua" },
         { answer: "CIELO", clue: "Espacio sobre nosotros" },
-        { answer: "AVION", clue: "Medio de transporte aéreo" },
-        { answer: "BANCO", clue: "Mueble para sentarse" },
-        { answer: "CAMPO", clue: "Terreno extenso" },
-        { answer: "DEDO", clue: "Parte de la mano" },
-        { answer: "ESTE", clue: "Punto cardinal" }
+        { answer: "AVION", clue: "Medio de transporte aéreo" }
       ],
       down: [
         { answer: "SAL", clue: "Condimento" },
         { answer: "UNO", clue: "Número uno" },
         { answer: "DOS", clue: "Número dos" },
         { answer: "TRES", clue: "Número tres" },
-        { answer: "ALMA", clue: "Espíritu" },
-        { answer: "BOCA", clue: "Abertura para comer" },
-        { answer: "COLA", clue: "Extremidad de algunos animales" },
-        { answer: "DADO", clue: "Cubo con números" }
+        { answer: "ALMA", clue: "Espíritu" }
       ]
     }
   },
@@ -198,22 +201,14 @@ const LEVEL_BANKS = [
         { answer: "GATO", clue: "Felino" },
         { answer: "PATO", clue: "Ave acuática" },
         { answer: "RANA", clue: "Anfibio saltador" },
-        { answer: "LOBO", clue: "Animal salvaje" },
-        { answer: "OSO", clue: "Mamífero grande" },
-        { answer: "TORO", clue: "Animal bovino" },
-        { answer: "CABRA", clue: "Animal con cuernos" },
-        { answer: "ARBOL", clue: "Planta de tronco" },
-        { answer: "FLOR", clue: "Parte de la planta" },
-        { answer: "PIEDRA", clue: "Roca" }
+        { answer: "LOBO", clue: "Animal salvaje" }
       ],
       down: [
         { answer: "CABAL", clue: "Relativo al caballo" },
         { answer: "ARPA", clue: "Instrumento de cuerda" },
         { answer: "OTOÑO", clue: "Estación del año" },
         { answer: "VERANO", clue: "Estación calurosa" },
-        { answer: "INVIERNO", clue: "Estación fría" },
-        { answer: "CUADRO", clue: "Obra de arte" },
-        { answer: "MUSICA", clue: "Arte de los sonidos" }
+        { answer: "INVIERNO", clue: "Estación fría" }
       ]
     }
   },
@@ -223,26 +218,18 @@ const LEVEL_BANKS = [
     bank: {
       across: [
         { answer: "BICICLETA", clue: "Vehículo de dos ruedas" },
-        { answer: "TELEVISION", clue: "Aparato que recibe imágenes" },
         { answer: "ESCUELA", clue: "Centro de enseñanza" },
         { answer: "LIBRETA", clue: "Cuaderno pequeño" },
         { answer: "LAPICERO", clue: "Instrumento para escribir" },
         { answer: "MADERA", clue: "Material de los árboles" },
-        { answer: "VENTANA", clue: "Abertura en la pared" },
-        { answer: "JARDIN", clue: "Terreno con plantas" },
-        { answer: "NUBE", clue: "Masa de vapor en el cielo" },
-        { answer: "LLUVIA", clue: "Agua que cae del cielo" }
+        { answer: "VENTANA", clue: "Abertura en la pared" }
       ],
       down: [
         { answer: "BOTE", clue: "Embarcación pequeña" },
         { answer: "LAPIZ", clue: "Instrumento de escritura" },
         { answer: "CUADERNO", clue: "Conjunto de hojas" },
         { answer: "MESA", clue: "Mueble con tablero" },
-        { answer: "SILLA", clue: "Mueble para sentarse" },
-        { answer: "PUERTA", clue: "Abertura para entrar" },
-        { answer: "PIZARRA", clue: "Superficie para escribir" },
-        { answer: "TIZA", clue: "Piedra para escribir" },
-        { answer: "REGLA", clue: "Instrumento para medir" }
+        { answer: "SILLA", clue: "Mueble para sentarse" }
       ]
     }
   },
@@ -255,22 +242,14 @@ const LEVEL_BANKS = [
         { answer: "BIBLIOTECA", clue: "Lugar donde se guardan libros" },
         { answer: "CIRCULO", clue: "Figura geométrica redonda" },
         { answer: "DOCTOR", clue: "Médico" },
-        { answer: "ELEFANTE", clue: "Mamífero con trompa" },
-        { answer: "FISICA", clue: "Ciencia de la materia" },
-        { answer: "GEOGRAFIA", clue: "Ciencia que estudia la Tierra" },
-        { answer: "HISTORIA", clue: "Narración de hechos pasados" },
-        { answer: "JUGUETE", clue: "Objeto para divertirse" }
+        { answer: "ELEFANTE", clue: "Mamífero con trompa" }
       ],
       down: [
         { answer: "AGUA", clue: "Líquido incoloro" },
         { answer: "BOSQUE", clue: "Lugar con muchos árboles" },
         { answer: "CIELO", clue: "Atmósfera vista desde abajo" },
         { answer: "DIENTE", clue: "Órgano de la boca" },
-        { answer: "ESTRELLA", clue: "Cuerpo celeste que brilla" },
-        { answer: "FLORIDA", clue: "Estado de EE.UU." },
-        { answer: "GITANO", clue: "Persona de etnia gitana" },
-        { answer: "HUEVO", clue: "Alimento ovalado" },
-        { answer: "ISLA", clue: "Terreno rodeado de agua" }
+        { answer: "ESTRELLA", clue: "Cuerpo celeste que brilla" }
       ]
     }
   },
@@ -283,20 +262,14 @@ const LEVEL_BANKS = [
         { answer: "BIOLOGIA", clue: "Ciencia de la vida" },
         { answer: "CHOCOLATE", clue: "Dulce hecho de cacao" },
         { answer: "DICCIONARIO", clue: "Libro con definiciones" },
-        { answer: "ECONOMIA", clue: "Ciencia de la administración" },
-        { answer: "FOTOGRAFIA", clue: "Arte de capturar imágenes" },
-        { answer: "GEOGRAFIA", clue: "Ciencia de la Tierra" },
-        { answer: "HISTORIA", clue: "Estudio del pasado" },
-        { answer: "INFORMATICA", clue: "Ciencia de los datos" }
+        { answer: "ECONOMIA", clue: "Ciencia de la administración" }
       ],
       down: [
         { answer: "ALGEBRA", clue: "Rama de las matemáticas" },
         { answer: "BOTANICA", clue: "Ciencia de las plantas" },
         { answer: "CINE", clue: "Arte de las películas" },
         { answer: "DANZA", clue: "Arte de bailar" },
-        { answer: "ESCULTURA", clue: "Arte de modelar figuras" },
-        { answer: "FISICA", clue: "Ciencia de la materia" },
-        { answer: "GEOLOGIA", clue: "Ciencia de la Tierra" }
+        { answer: "ESCULTURA", clue: "Arte de modelar figuras" }
       ]
     }
   }
@@ -580,14 +553,17 @@ function renderClues() {
   els.cluesDown.innerHTML = '';
 
   if (!cw || !cw.entries) {
-    console.warn('No hay pistas para mostrar');
+    const empty = document.createElement('div');
+    empty.className = 'clueItem';
+    empty.style.color = 'var(--muted)';
+    empty.textContent = 'Cargando pistas...';
+    els.cluesAcross.appendChild(empty.cloneNode(true));
+    els.cluesDown.appendChild(empty);
     return;
   }
 
   const across = cw.entries.across || [];
   const down = cw.entries.down || [];
-
-  console.log(`📝 Mostrando ${across.length} pistas horizontales y ${down.length} verticales`);
 
   if (across.length === 0) {
     const empty = document.createElement('div');
@@ -649,43 +625,33 @@ function startLevel(index) {
   const def = LEVEL_BANKS[currentLevelIndex];
   const { rows, cols } = def.size;
 
-  let generated;
-  let attempts = 0;
-  const maxAttempts = 20;
-
-  while (attempts < maxAttempts) {
-    try {
-      generated = generateCrossword(def.bank.across, def.bank.down, rows, cols);
-      if (generated && generated.entries.across.length > 0 && generated.entries.down.length > 0) {
-        break;
-      }
-    } catch (e) {
-      console.warn(`Intento ${attempts + 1} fallido:`, e.message);
-    }
-    attempts++;
+  // Intentar generar el crucigrama
+  let generated = null;
+  try {
+    generated = generateCrossword(def.bank.across, def.bank.down, rows, cols);
+  } catch (e) {
+    console.warn('Error generando crucigrama:', e);
   }
 
+  // Si falló o no tiene suficientes pistas, usar fallback manual
   if (!generated || generated.entries.across.length === 0 || generated.entries.down.length === 0) {
-    // Fallback: usar una configuración simple con las primeras palabras
-    console.warn('Usando configuración de respaldo');
-    const fallback = def.bank;
-    const simpleAcross = fallback.across.slice(0, Math.min(3, fallback.across.length));
-    const simpleDown = fallback.down.slice(0, Math.min(3, fallback.down.length));
-    
+    console.warn('Usando fallback manual');
+    // Crear un crucigrama simple manualmente
     const grid = Array.from({ length: rows }, () => Array(cols).fill('#'));
     const entries = { across: [], down: [] };
     let num = 1;
     
-    // Colocar horizontales en la primera fila
-    for (let i = 0; i < simpleAcross.length && i < cols; i++) {
-      const word = simpleAcross[i];
-      if (word.answer.length <= cols) {
+    // Usar las primeras palabras horizontales
+    const fallbackAcross = def.bank.across.slice(0, Math.min(3, def.bank.across.length));
+    for (let i = 0; i < fallbackAcross.length; i++) {
+      const word = fallbackAcross[i];
+      if (word.answer.length <= cols && i < rows) {
         for (let j = 0; j < word.answer.length; j++) {
-          grid[0][j] = word.answer[j];
+          grid[i][j] = word.answer[j];
         }
         entries.across.push({
           number: num++,
-          row: 0,
+          row: i,
           col: 0,
           answer: word.answer,
           clue: word.clue
@@ -693,20 +659,25 @@ function startLevel(index) {
       }
     }
     
-    // Colocar verticales en la primera columna
-    for (let i = 0; i < simpleDown.length && i < rows; i++) {
-      const word = simpleDown[i];
-      if (word.answer.length <= rows) {
+    // Usar las primeras palabras verticales
+    const fallbackDown = def.bank.down.slice(0, Math.min(3, def.bank.down.length));
+    let downRow = 0;
+    for (let i = 0; i < fallbackDown.length; i++) {
+      const word = fallbackDown[i];
+      if (word.answer.length <= rows && downRow + word.answer.length <= rows) {
         for (let j = 0; j < word.answer.length; j++) {
-          grid[j][0] = word.answer[j];
+          if (grid[downRow + j][cols - 1] === '#') {
+            grid[downRow + j][cols - 1] = word.answer[j];
+          }
         }
         entries.down.push({
           number: num++,
-          row: 0,
-          col: 0,
+          row: downRow,
+          col: cols - 1,
           answer: word.answer,
           clue: word.clue
         });
+        downRow += word.answer.length + 1;
       }
     }
     
@@ -782,4 +753,4 @@ function init() {
   startLevel(levelToStart);
 }
 
-window.addEventListener('DOMContentLoaded', init);
+window
