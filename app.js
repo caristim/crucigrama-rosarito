@@ -301,7 +301,7 @@ const LEVEL_BANKS = [
   }
 ];
 
-/* ========= RESTO DE LA APP (sin cambios importantes) ========= */
+/* ========= RESTO DE LA APP ========= */
 let currentLevelIndex = 0;
 let cw = null;
 let state = {
@@ -415,7 +415,7 @@ function buildCellIndex(levelData) {
   return cell;
 }
 
-/* ========= RENDERIZADO (idéntico a versiones anteriores) ========= */
+/* ========= RENDERIZADO ========= */
 function renderBoard() {
   const { rows, cols } = cw.size;
   els.board.innerHTML = '';
@@ -573,20 +573,58 @@ function updateActiveInfo() {
   els.entryText.textContent = entry ? `Pista ${entryNumber}: "${entry.clue}" (Letra ${indexInEntry + 1})` : '—';
 }
 
+/* ========= RENDERIZADO DE PISTAS (CORREGIDO) ========= */
 function renderClues() {
-  els.cluesAcross.innerHTML = ''; els.cluesDown.innerHTML = '';
-  const generate = (container, list, dir) => {
-    for (const e of list) {
+  // Limpiar contenedores
+  els.cluesAcross.innerHTML = '';
+  els.cluesDown.innerHTML = '';
+
+  // Verificar que existan las pistas
+  if (!cw || !cw.entries) {
+    console.warn('No hay pistas para mostrar');
+    return;
+  }
+
+  const across = cw.entries.across || [];
+  const down = cw.entries.down || [];
+
+  console.log(`📝 Mostrando ${across.length} pistas horizontales y ${down.length} verticales`);
+
+  // Generar pistas horizontales
+  if (across.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'clueItem';
+    empty.style.color = 'var(--muted)';
+    empty.textContent = 'No hay pistas horizontales';
+    els.cluesAcross.appendChild(empty);
+  } else {
+    for (const e of across) {
       const div = document.createElement('div');
       div.className = 'clueItem';
       div.style.cursor = 'pointer';
       div.innerHTML = `<span class="n">${e.number}.</span><span class="t">${e.clue}</span>`;
-      div.addEventListener('click', () => selectCell(e.row, e.col, dir));
-      container.appendChild(div);
+      div.addEventListener('click', () => selectCell(e.row, e.col, 'across'));
+      els.cluesAcross.appendChild(div);
     }
-  };
-  generate(els.cluesAcross, cw.entries.across, 'across');
-  generate(els.cluesDown, cw.entries.down, 'down');
+  }
+
+  // Generar pistas verticales
+  if (down.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'clueItem';
+    empty.style.color = 'var(--muted)';
+    empty.textContent = 'No hay pistas verticales';
+    els.cluesDown.appendChild(empty);
+  } else {
+    for (const e of down) {
+      const div = document.createElement('div');
+      div.className = 'clueItem';
+      div.style.cursor = 'pointer';
+      div.innerHTML = `<span class="n">${e.number}.</span><span class="t">${e.clue}</span>`;
+      div.addEventListener('click', () => selectCell(e.row, e.col, 'down'));
+      els.cluesDown.appendChild(div);
+    }
+  }
 }
 
 /* ========= COMPROBACIÓN DE NIVEL COMPLETADO ========= */
@@ -620,7 +658,6 @@ function startLevel(index) {
     generated = generateCrossword(def.bank.across, def.bank.down, rows, cols, 15);
   } catch (e) {
     alert('Error al generar el crucigrama: ' + e.message + '\nIntentando de nuevo...');
-    // Reintentar una vez más
     try {
       generated = generateCrossword(def.bank.across, def.bank.down, rows, cols, 20);
     } catch (e2) {
@@ -646,7 +683,9 @@ function startLevel(index) {
   cellIndex = buildCellIndex(cw);
   loadProgress();
 
+  // Renderizar pistas primero
   renderClues();
+  // Luego renderizar el tablero
   renderBoard();
 
   // Seleccionar primera celda editable
