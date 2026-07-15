@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Crucigramas Pro - Generador automático</title>
-  <link rel="stylesheet" href="styles.css?v=15" />
+  <link rel="stylesheet" href="styles.css?v=18" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -17,60 +17,4 @@
   <header class="topbar">
     <div class="brand">Crucigramas Pro</div>
     <div class="controls">
-      <span id="levelIndicator" style="font-weight: 700; color: var(--accent2); background: rgba(56,189,248,0.1); padding: 4px 10px; border-radius: 6px; font-size: 14px;">Nivel 1</span>
-    </div>
-  </header>
-
-  <main class="layout">
-    <section class="boardWrap">
-      <div class="hintRow" style="align-items: center; gap: 12px;">
-        <div class="activeInfo" style="flex: 1; min-width: 200px;">
-          <span class="k">Sentido:</span>
-          <span id="dirText" style="font-weight:700; color:var(--accent2); margin-right: 8px;">—</span>
-          <button id="toggleDirBtn" class="btn secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 12px;">🔄 Voltear</button>
-          <br class="mobile-break" style="display: none;"/>
-          <span class="k">Pista:</span><span id="entryText" style="font-weight:700;">—</span>
-        </div>
-        <div class="buttons" style="display: flex; gap: 6px;">
-          <button id="checkBtn" class="btn" style="padding: 8px 12px; font-size: 13px;">Comprobar</button>
-          <button id="nextLevelBtn" class="btn" style="background: rgba(34, 197, 94, 0.25); border-color: var(--accent); padding: 8px 12px; font-size: 13px;">Siguiente nivel ➡️</button>
-        </div>
-      </div>
-      <div id="board" class="board"></div>
-    </section>
-
-    <aside class="side">
-      <div class="panel">
-        <h2>Pistas del Nivel</h2>
-        <div class="clues">
-          <div>
-            <div class="clueTitle">Horizontales</div>
-            <div id="cluesAcross" class="clueList"></div>
-          </div>
-          <div>
-            <div class="clueTitle">Verticales</div>
-            <div id="cluesDown" class="clueList"></div>
-          </div>
-        </div>
-      </div>
-    </aside>
-  </main>
-
-  <footer class="footer">
-    <p style="margin-bottom: 4px;">Crucigramas Secuenciales Infinitos - Dificultad Gradual</p>
-    <p style="font-size: 11px; color: var(--muted); opacity: 0.8; letter-spacing: 0.02em;">
-      Creación: Carlos Aristimuño - Idea: Rosario Granja 2026
-    </p>
-  </footer>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
-      });
-    }
-  </script>
-
-  <script src="app.js?v=15"></script>
-</body>
-</html>
+      <span id="levelIndicator" style="font-weight: 700; color: var(--accent2); background: rgba(56,189,248,0.1); padding: 4px 10px; border-radius: 6px; font-size
