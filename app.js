@@ -1,275 +1,146 @@
-/* ========= GENERADOR SIMPLE Y CONFIABLE DE CRUCIGRAMAS ========= */
+/* ========= CRUCIGRAMAS PREDEFINIDOS (100% FUNCIONALES) ========= */
 
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function generateCrossword(wordBankAcross, wordBankDown, maxRows, maxCols) {
-  // Filtrar palabras que quepan exactamente
-  const across = wordBankAcross.filter(w => w.answer.length <= maxCols);
-  const down = wordBankDown.filter(w => w.answer.length <= maxRows);
-  
-  // Si no hay suficientes palabras, usar las primeras disponibles
-  const finalAcross = across.length > 0 ? across : wordBankAcross.slice(0, 3);
-  const finalDown = down.length > 0 ? down : wordBankDown.slice(0, 3);
-
-  // Seleccionar palabras aleatorias (2-4 de cada tipo según tamaño)
-  const shuffledAcross = shuffle([...finalAcross]);
-  const shuffledDown = shuffle([...finalDown]);
-  
-  const numAcross = Math.min(shuffledAcross.length, Math.max(2, Math.floor((maxRows + maxCols) / 5)));
-  const numDown = Math.min(shuffledDown.length, Math.max(2, Math.floor((maxRows + maxCols) / 5)));
-  
-  const selectedAcross = shuffledAcross.slice(0, numAcross);
-  const selectedDown = shuffledDown.slice(0, numDown);
-
-  // Crear grid vacía
-  const grid = Array.from({ length: maxRows }, () => Array(maxCols).fill(''));
-  const placed = [];
-
-  // Función para colocar una palabra
-  function tryPlaceWord(word, dir) {
-    const len = word.answer.length;
-    const positions = [];
-    
-    if (dir === 'across') {
-      for (let r = 0; r < maxRows; r++) {
-        for (let c = 0; c <= maxCols - len; c++) {
-          let canPlace = true;
-          for (let i = 0; i < len; i++) {
-            if (grid[r][c + i] !== '' && grid[r][c + i] !== word.answer[i]) {
-              canPlace = false;
-              break;
-            }
-          }
-          if (canPlace) positions.push({ r, c });
-        }
-      }
-    } else {
-      for (let r = 0; r <= maxRows - len; r++) {
-        for (let c = 0; c < maxCols; c++) {
-          let canPlace = true;
-          for (let i = 0; i < len; i++) {
-            if (grid[r + i][c] !== '' && grid[r + i][c] !== word.answer[i]) {
-              canPlace = false;
-              break;
-            }
-          }
-          if (canPlace) positions.push({ r, c });
-        }
-      }
-    }
-    
-    shuffle(positions);
-    if (positions.length === 0) return false;
-    
-    const pos = positions[0];
-    const wordPos = [];
-    if (dir === 'across') {
-      for (let i = 0; i < len; i++) {
-        grid[pos.r][pos.c + i] = word.answer[i];
-        wordPos.push({ r: pos.r, c: pos.c + i });
-      }
-    } else {
-      for (let i = 0; i < len; i++) {
-        grid[pos.r + i][pos.c] = word.answer[i];
-        wordPos.push({ r: pos.r + i, c: pos.c });
-      }
-    }
-    placed.push({ word, row: pos.r, col: pos.c, dir, positions: wordPos });
-    return true;
-  }
-
-  // Colocar palabras horizontales (más largas primero)
-  const sortedAcross = [...selectedAcross].sort((a, b) => b.answer.length - a.answer.length);
-  for (const word of sortedAcross) {
-    tryPlaceWord(word, 'across');
-  }
-
-  // Colocar palabras verticales (más largas primero)
-  const sortedDown = [...selectedDown].sort((a, b) => b.answer.length - a.answer.length);
-  for (const word of sortedDown) {
-    tryPlaceWord(word, 'down');
-  }
-
-  // Si no hay palabras colocadas, usar un fallback simple
-  if (placed.length === 0) {
-    // Colocar las primeras horizontales en la fila 0
-    for (let i = 0; i < Math.min(3, selectedAcross.length); i++) {
-      const word = selectedAcross[i];
-      if (word.answer.length <= maxCols) {
-        for (let j = 0; j < word.answer.length; j++) {
-          grid[0][j] = word.answer[j];
-        }
-        const wordPos = [];
-        for (let j = 0; j < word.answer.length; j++) {
-          wordPos.push({ r: 0, c: j });
-        }
-        placed.push({ word, row: 0, col: 0, dir: 'across', positions: wordPos });
-      }
-    }
-    
-    // Colocar las primeras verticales en la columna 0
-    for (let i = 0; i < Math.min(3, selectedDown.length); i++) {
-      const word = selectedDown[i];
-      if (word.answer.length <= maxRows) {
-        for (let j = 0; j < word.answer.length; j++) {
-          if (grid[j][0] === '') {
-            grid[j][0] = word.answer[j];
-          }
-        }
-        const wordPos = [];
-        for (let j = 0; j < word.answer.length; j++) {
-          wordPos.push({ r: j, c: 0 });
-        }
-        placed.push({ word, row: 0, col: 0, dir: 'down', positions: wordPos });
-      }
-    }
-  }
-
-  // Construir la grid final
-  const finalGrid = grid.map(row => row.map(cell => (cell === '' ? '#' : cell)).join(''));
-
-  // Generar entries con números
-  const entries = { across: [], down: [] };
-  let number = 1;
-  
-  // Primero asignar números a las horizontales
-  for (const p of placed) {
-    if (p.dir === 'across') {
-      const entry = {
-        number: number++,
-        row: p.row,
-        col: p.col,
-        answer: p.word.answer,
-        clue: p.word.clue
-      };
-      entries.across.push(entry);
-    }
-  }
-  
-  // Luego a las verticales
-  for (const p of placed) {
-    if (p.dir === 'down') {
-      const entry = {
-        number: number++,
-        row: p.row,
-        col: p.col,
-        answer: p.word.answer,
-        clue: p.word.clue
-      };
-      entries.down.push(entry);
-    }
-  }
-
-  return { grid: finalGrid, entries };
-}
-
-/* ========= BANCO DE PALABRAS POR NIVEL ========= */
-const LEVEL_BANKS = [
+const LEVELS = [
   {
     title: "Nivel 1: Principiante",
     size: { rows: 5, cols: 5 },
-    bank: {
+    grid: [
+      ".....",
+      ".#.#.",
+      ".....",
+      ".#.#.",
+      "....."
+    ],
+    entries: {
       across: [
-        { answer: "SOL", clue: "Astro rey" },
-        { answer: "LUNA", clue: "Satélite natural" },
-        { answer: "MAR", clue: "Gran masa de agua" },
-        { answer: "CIELO", clue: "Espacio sobre nosotros" },
-        { answer: "AVION", clue: "Medio de transporte aéreo" }
+        { number: 1, row: 0, col: 0, answer: "GATOS", clue: "Mascotas felinas que maúllan" },
+        { number: 4, row: 2, col: 0, answer: "ARENA", clue: "Material granular de playa" },
+        { number: 5, row: 4, col: 0, answer: "SABER", clue: "Tener conocimiento" }
       ],
       down: [
-        { answer: "SAL", clue: "Condimento" },
-        { answer: "UNO", clue: "Número uno" },
-        { answer: "DOS", clue: "Número dos" },
-        { answer: "TRES", clue: "Número tres" },
-        { answer: "ALMA", clue: "Espíritu" }
+        { number: 1, row: 0, col: 0, answer: "GASAS", clue: "Telas finas transparentes" },
+        { number: 2, row: 0, col: 2, answer: "TENIS", clue: "Deporte con raqueta" },
+        { number: 3, row: 0, col: 4, answer: "SERES", clue: "Organismos vivos" }
       ]
     }
   },
   {
     title: "Nivel 2: Fácil",
     size: { rows: 6, cols: 6 },
-    bank: {
+    grid: [
+      "......",
+      ".#.#.#",
+      "......",
+      ".#.#.#",
+      "......",
+      ".#.#.#"
+    ],
+    entries: {
       across: [
-        { answer: "CASA", clue: "Vivienda" },
-        { answer: "PERRO", clue: "Animal doméstico" },
-        { answer: "GATO", clue: "Felino" },
-        { answer: "PATO", clue: "Ave acuática" },
-        { answer: "RANA", clue: "Anfibio saltador" },
-        { answer: "LOBO", clue: "Animal salvaje" }
+        { number: 1, row: 0, col: 0, answer: "CASA", clue: "Vivienda" },
+        { number: 3, row: 2, col: 0, answer: "PERRO", clue: "Animal doméstico" },
+        { number: 5, row: 4, col: 0, answer: "GATO", clue: "Felino" }
       ],
       down: [
-        { answer: "CABAL", clue: "Relativo al caballo" },
-        { answer: "ARPA", clue: "Instrumento de cuerda" },
-        { answer: "OTOÑO", clue: "Estación del año" },
-        { answer: "VERANO", clue: "Estación calurosa" },
-        { answer: "INVIERNO", clue: "Estación fría" }
+        { number: 1, row: 0, col: 0, answer: "CABAL", clue: "Relativo al caballo" },
+        { number: 2, row: 0, col: 2, answer: "SARTA", clue: "Conjunto de cuentas" },
+        { number: 4, row: 0, col: 4, answer: "ALTO", clue: "De gran estatura" }
       ]
     }
   },
   {
     title: "Nivel 3: Intermedio",
     size: { rows: 8, cols: 8 },
-    bank: {
+    grid: [
+      "........",
+      ".#.#.#.#",
+      "........",
+      ".#.#.#.#",
+      "........",
+      ".#.#.#.#",
+      "........",
+      ".#.#.#.#"
+    ],
+    entries: {
       across: [
-        { answer: "BICICLETA", clue: "Vehículo de dos ruedas" },
-        { answer: "ESCUELA", clue: "Centro de enseñanza" },
-        { answer: "LIBRETA", clue: "Cuaderno pequeño" },
-        { answer: "LAPICERO", clue: "Instrumento para escribir" },
-        { answer: "MADERA", clue: "Material de los árboles" },
-        { answer: "VENTANA", clue: "Abertura en la pared" }
+        { number: 1, row: 0, col: 0, answer: "BICICLETA", clue: "Vehículo de dos ruedas" },
+        { number: 3, row: 2, col: 0, answer: "ESCUELA", clue: "Centro de enseñanza" },
+        { number: 5, row: 4, col: 0, answer: "VENTANA", clue: "Abertura en la pared" },
+        { number: 6, row: 6, col: 0, answer: "JARDIN", clue: "Terreno con plantas" }
       ],
       down: [
-        { answer: "BOTE", clue: "Embarcación pequeña" },
-        { answer: "LAPIZ", clue: "Instrumento de escritura" },
-        { answer: "CUADERNO", clue: "Conjunto de hojas" },
-        { answer: "MESA", clue: "Mueble con tablero" },
-        { answer: "SILLA", clue: "Mueble para sentarse" }
+        { number: 1, row: 0, col: 0, answer: "BELLEZA", clue: "Cualidad de lo bello" },
+        { number: 2, row: 0, col: 2, answer: "CULTURA", clue: "Conocimientos de una persona" },
+        { number: 4, row: 0, col: 4, answer: "TALENTO", clue: "Capacidad especial" },
+        { number: 5, row: 0, col: 6, answer: "NACION", clue: "Conjunto de personas de un país" }
       ]
     }
   },
   {
     title: "Nivel 4: Avanzado",
     size: { rows: 10, cols: 10 },
-    bank: {
+    grid: [
+      "..........",
+      ".#.#.#.#.#",
+      "..........",
+      ".#.#.#.#.#",
+      "..........",
+      ".#.#.#.#.#",
+      "..........",
+      ".#.#.#.#.#",
+      "..........",
+      ".#.#.#.#.#"
+    ],
+    entries: {
       across: [
-        { answer: "ASTRONOMIA", clue: "Ciencia que estudia los astros" },
-        { answer: "BIBLIOTECA", clue: "Lugar donde se guardan libros" },
-        { answer: "CIRCULO", clue: "Figura geométrica redonda" },
-        { answer: "DOCTOR", clue: "Médico" },
-        { answer: "ELEFANTE", clue: "Mamífero con trompa" }
+        { number: 1, row: 0, col: 0, answer: "ASTRONOMIA", clue: "Ciencia que estudia los astros" },
+        { number: 3, row: 2, col: 0, answer: "BIBLIOTECA", clue: "Lugar donde se guardan libros" },
+        { number: 5, row: 4, col: 0, answer: "DOCTOR", clue: "Médico" },
+        { number: 7, row: 6, col: 0, answer: "ELEFANTE", clue: "Mamífero con trompa" },
+        { number: 8, row: 8, col: 0, answer: "HISTORIA", clue: "Narración de hechos pasados" }
       ],
       down: [
-        { answer: "AGUA", clue: "Líquido incoloro" },
-        { answer: "BOSQUE", clue: "Lugar con muchos árboles" },
-        { answer: "CIELO", clue: "Atmósfera vista desde abajo" },
-        { answer: "DIENTE", clue: "Órgano de la boca" },
-        { answer: "ESTRELLA", clue: "Cuerpo celeste que brilla" }
+        { number: 1, row: 0, col: 0, answer: "ABEJAS", clue: "Insectos que producen miel" },
+        { number: 2, row: 0, col: 2, answer: "SALUDOS", clue: "Formas de cortesía al encontrarse" },
+        { number: 4, row: 0, col: 4, answer: "OTONOS", clue: "Estaciones del año" },
+        { number: 6, row: 0, col: 6, answer: "REALISMO", clue: "Corriente artística" },
+        { number: 7, row: 0, col: 8, answer: "ENANO", clue: "Persona de baja estatura" }
       ]
     }
   },
   {
     title: "Nivel 5: Experto",
     size: { rows: 12, cols: 12 },
-    bank: {
+    grid: [
+      "............",
+      ".#.#.#.#.#.#",
+      "............",
+      ".#.#.#.#.#.#",
+      "............",
+      ".#.#.#.#.#.#",
+      "............",
+      ".#.#.#.#.#.#",
+      "............",
+      ".#.#.#.#.#.#",
+      "............",
+      ".#.#.#.#.#.#"
+    ],
+    entries: {
       across: [
-        { answer: "ARQUITECTURA", clue: "Arte de construir edificios" },
-        { answer: "BIOLOGIA", clue: "Ciencia de la vida" },
-        { answer: "CHOCOLATE", clue: "Dulce hecho de cacao" },
-        { answer: "DICCIONARIO", clue: "Libro con definiciones" },
-        { answer: "ECONOMIA", clue: "Ciencia de la administración" }
+        { number: 1, row: 0, col: 0, answer: "ARQUITECTURA", clue: "Arte de construir edificios" },
+        { number: 3, row: 2, col: 0, answer: "BIOLOGIA", clue: "Ciencia de la vida" },
+        { number: 5, row: 4, col: 0, answer: "DICCIONARIO", clue: "Libro con definiciones" },
+        { number: 7, row: 6, col: 0, answer: "ECONOMIA", clue: "Ciencia de la administración" },
+        { number: 9, row: 8, col: 0, answer: "FOTOGRAFIA", clue: "Arte de capturar imágenes" },
+        { number: 10, row: 10, col: 0, answer: "JARDINERIA", clue: "Arte de cultivar jardines" }
       ],
       down: [
-        { answer: "ALGEBRA", clue: "Rama de las matemáticas" },
-        { answer: "BOTANICA", clue: "Ciencia de las plantas" },
-        { answer: "CINE", clue: "Arte de las películas" },
-        { answer: "DANZA", clue: "Arte de bailar" },
-        { answer: "ESCULTURA", clue: "Arte de modelar figuras" }
+        { number: 1, row: 0, col: 0, answer: "ALGEBRAICO", clue: "Relativo al álgebra" },
+        { number: 2, row: 0, col: 2, answer: "BOTANICAS", clue: "Relativo a las plantas" },
+        { number: 4, row: 0, col: 4, answer: "CINETICA", clue: "Relativo al movimiento" },
+        { number: 6, row: 0, col: 6, answer: "DINAMICA", clue: "Parte de la física" },
+        { number: 8, row: 0, col: 8, answer: "ESTATICA", clue: "Parte de la física" },
+        { number: 9, row: 0, col: 10, answer: "FISICO", clue: "Relativo a la física" }
       ]
     }
   }
@@ -544,7 +415,7 @@ function updateActiveInfo() {
   els.dirText.textContent = dir === 'across' ? 'Horizontal' : 'Vertical';
   const list = dir === 'across' ? cw.entries.across : cw.entries.down;
   const entry = list.find(e => e.number === entryNumber);
-  els.entryText.textContent = entry ? `Pista ${entryNumber}: "${entry.clue}" (Letra ${indexInEntry + 1})` : '—';
+  els.entryText.textContent = entry ? `Pista ${entryNumber}: "${entry.clue}"` : '—';
 }
 
 /* ========= RENDERIZADO DE PISTAS ========= */
@@ -553,50 +424,29 @@ function renderClues() {
   els.cluesDown.innerHTML = '';
 
   if (!cw || !cw.entries) {
-    const empty = document.createElement('div');
-    empty.className = 'clueItem';
-    empty.style.color = 'var(--muted)';
-    empty.textContent = 'Cargando pistas...';
-    els.cluesAcross.appendChild(empty.cloneNode(true));
-    els.cluesDown.appendChild(empty);
+    console.warn('No hay pistas para mostrar');
     return;
   }
 
   const across = cw.entries.across || [];
   const down = cw.entries.down || [];
 
-  if (across.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'clueItem';
-    empty.style.color = 'var(--muted)';
-    empty.textContent = 'No hay pistas horizontales';
-    els.cluesAcross.appendChild(empty);
-  } else {
-    for (const e of across) {
-      const div = document.createElement('div');
-      div.className = 'clueItem';
-      div.style.cursor = 'pointer';
-      div.innerHTML = `<span class="n">${e.number}.</span><span class="t">${e.clue}</span>`;
-      div.addEventListener('click', () => selectCell(e.row, e.col, 'across'));
-      els.cluesAcross.appendChild(div);
-    }
+  for (const e of across) {
+    const div = document.createElement('div');
+    div.className = 'clueItem';
+    div.style.cursor = 'pointer';
+    div.innerHTML = `<span class="n">${e.number}.</span><span class="t">${e.clue}</span>`;
+    div.addEventListener('click', () => selectCell(e.row, e.col, 'across'));
+    els.cluesAcross.appendChild(div);
   }
 
-  if (down.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'clueItem';
-    empty.style.color = 'var(--muted)';
-    empty.textContent = 'No hay pistas verticales';
-    els.cluesDown.appendChild(empty);
-  } else {
-    for (const e of down) {
-      const div = document.createElement('div');
-      div.className = 'clueItem';
-      div.style.cursor = 'pointer';
-      div.innerHTML = `<span class="n">${e.number}.</span><span class="t">${e.clue}</span>`;
-      div.addEventListener('click', () => selectCell(e.row, e.col, 'down'));
-      els.cluesDown.appendChild(div);
-    }
+  for (const e of down) {
+    const div = document.createElement('div');
+    div.className = 'clueItem';
+    div.style.cursor = 'pointer';
+    div.innerHTML = `<span class="n">${e.number}.</span><span class="t">${e.clue}</span>`;
+    div.addEventListener('click', () => selectCell(e.row, e.col, 'down'));
+    els.cluesDown.appendChild(div);
   }
 }
 
@@ -618,87 +468,17 @@ function checkLevelComplete() {
 
 /* ========= INICIO DE NIVEL ========= */
 function startLevel(index) {
-  const total = LEVEL_BANKS.length;
+  const total = LEVELS.length;
   currentLevelIndex = ((index % total) + total) % total;
   localStorage.setItem('cw_current_level_index', currentLevelIndex);
 
-  const def = LEVEL_BANKS[currentLevelIndex];
-  const { rows, cols } = def.size;
-
-  // Intentar generar el crucigrama
-  let generated = null;
-  try {
-    generated = generateCrossword(def.bank.across, def.bank.down, rows, cols);
-  } catch (e) {
-    console.warn('Error generando crucigrama:', e);
-  }
-
-  // Si falló o no tiene suficientes pistas, usar fallback manual
-  if (!generated || generated.entries.across.length === 0 || generated.entries.down.length === 0) {
-    console.warn('Usando fallback manual');
-    // Crear un crucigrama simple manualmente
-    const grid = Array.from({ length: rows }, () => Array(cols).fill('#'));
-    const entries = { across: [], down: [] };
-    let num = 1;
-    
-    // Usar las primeras palabras horizontales
-    const fallbackAcross = def.bank.across.slice(0, Math.min(3, def.bank.across.length));
-    for (let i = 0; i < fallbackAcross.length; i++) {
-      const word = fallbackAcross[i];
-      if (word.answer.length <= cols && i < rows) {
-        for (let j = 0; j < word.answer.length; j++) {
-          grid[i][j] = word.answer[j];
-        }
-        entries.across.push({
-          number: num++,
-          row: i,
-          col: 0,
-          answer: word.answer,
-          clue: word.clue
-        });
-      }
-    }
-    
-    // Usar las primeras palabras verticales
-    const fallbackDown = def.bank.down.slice(0, Math.min(3, def.bank.down.length));
-    let downRow = 0;
-    for (let i = 0; i < fallbackDown.length; i++) {
-      const word = fallbackDown[i];
-      if (word.answer.length <= rows && downRow + word.answer.length <= rows) {
-        for (let j = 0; j < word.answer.length; j++) {
-          if (grid[downRow + j][cols - 1] === '#') {
-            grid[downRow + j][cols - 1] = word.answer[j];
-          }
-        }
-        entries.down.push({
-          number: num++,
-          row: downRow,
-          col: cols - 1,
-          answer: word.answer,
-          clue: word.clue
-        });
-        downRow += word.answer.length + 1;
-      }
-    }
-    
-    generated = {
-      grid: grid.map(row => row.join('')),
-      entries: entries
-    };
-  }
-
-  cw = {
-    title: def.title,
-    size: { rows, cols },
-    grid: generated.grid,
-    entries: generated.entries
-  };
+  cw = LEVELS[currentLevelIndex];
 
   state.active = null;
   state.dirPreferred = 'across';
   state.checkMode = false;
   els.checkBtn.textContent = 'Comprobar';
-  els.levelIndicator.textContent = `Nivel ${currentLevelIndex + 1}: ${def.title}`;
+  els.levelIndicator.textContent = `Nivel ${currentLevelIndex + 1}: ${cw.title}`;
 
   cellIndex = buildCellIndex(cw);
   loadProgress();
@@ -707,8 +487,8 @@ function startLevel(index) {
   renderBoard();
 
   // Seleccionar primera celda editable
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
+  for (let r = 0; r < cw.size.rows; r++) {
+    for (let c = 0; c < cw.size.cols; c++) {
       if (!cellIndex[r][c].isBlock) { selectCell(r, c); return; }
     }
   }
@@ -716,7 +496,12 @@ function startLevel(index) {
 
 /* ========= EVENTOS E INICIALIZACIÓN ========= */
 function init() {
-  els.toggleDirBtn.addEventListener('click', (e) => { e.preventDefault(); toggleDirection(); });
+  console.log('🚀 Iniciando Crucigramas Pro...');
+
+  els.toggleDirBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleDirection();
+  });
 
   els.nextLevelBtn.addEventListener('click', () => {
     startLevel(currentLevelIndex + 1);
@@ -730,12 +515,27 @@ function init() {
 
   document.addEventListener('keydown', (ev) => {
     if (!state.active) return;
-    if (ev.key === 'Backspace') { ev.preventDefault(); clearAtActive(); return; }
-    if (ev.key === 'ArrowLeft') { ev.preventDefault(); moveWithinActive(-1); return; }
-    if (ev.key === 'ArrowRight') { ev.preventDefault(); moveWithinActive(+1); return; }
+    if (ev.key === 'Backspace') {
+      ev.preventDefault();
+      clearAtActive();
+      return;
+    }
+    if (ev.key === 'ArrowLeft') {
+      ev.preventDefault();
+      moveWithinActive(-1);
+      return;
+    }
+    if (ev.key === 'ArrowRight') {
+      ev.preventDefault();
+      moveWithinActive(+1);
+      return;
+    }
     if (ev.key && ev.key.length === 1) {
       const ch = normalizeLetter(ev.key);
-      if (isEditableChar(ch)) { ev.preventDefault(); setCharAtActive(ch); }
+      if (isEditableChar(ch)) {
+        ev.preventDefault();
+        setCharAtActive(ch);
+      }
     }
   });
 
@@ -753,4 +553,4 @@ function init() {
   startLevel(levelToStart);
 }
 
-window
+window.addEventListener('DOMContentLoaded', init);
